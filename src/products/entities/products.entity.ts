@@ -54,9 +54,4 @@ export class Products {
   @Expose()
   @IsNumber()
   alternative_id: number;
-
-  @Expose()
-  @IsOptional()
-  @IsUUID()
-  store_id?: string;
 }

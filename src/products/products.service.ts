@@ -78,10 +78,6 @@ export class ProductsService {
       values = values + `'${input.discount_id}',`;
       columns = columns + 'discount_id,';
     }
-    if (input.store_id) {
-      values = values + `'${input.store_id}',`;
-      columns = columns + 'store_id,';
-    }
 
     const data = await this.productsRepository.query(
       `insert into ${
@@ -104,9 +100,6 @@ export class ProductsService {
     }
     if (input.discount_id) {
       values = values + `discount_id = '${input.discount_id}',`;
-    }
-    if (input.store_id) {
-      values = values + `store_id = '${input.store_id}',`;
     }
 
     const data = await this.productsRepository.query(

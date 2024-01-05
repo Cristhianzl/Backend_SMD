@@ -8,6 +8,7 @@ import { DiscountsModule } from './discounts/discounts.module';
 import { ProductsModule } from './products/products.module';
 import { StoresModule } from './stores/stores.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { MenusModule } from './menu/menu.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     DiscountsModule,
     ProductsModule,
     StoresModule,
+    MenusModule,
   ],
   controllers: [],
   providers: [],
