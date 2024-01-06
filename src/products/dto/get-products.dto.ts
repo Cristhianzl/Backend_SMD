@@ -25,10 +25,6 @@ export class GetProductsDto extends BaseDto {
   @JoinColumn([{ name: 'category_id', referencedColumnName: 'id' }])
   category_id: Categories;
 
-  @ManyToOne(() => Discount, (dsc) => dsc.id)
-  @JoinColumn([{ name: 'discount_id', referencedColumnName: 'id' }])
-  discount_id: string;
-
   @Column({ type: 'numeric', nullable: false })
   price: number;
 
@@ -52,4 +48,10 @@ export class GetProductsDto extends BaseDto {
       this.id = uuid();
     }
   }
+
+  @Column({ type: 'string' })
+  discount_type: string;
+
+  @Column({ type: 'numeric' })
+  discount_value: number;
 }

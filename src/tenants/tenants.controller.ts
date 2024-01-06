@@ -131,6 +131,23 @@ export class TenantsController {
     description: 'Tenant',
     required: true,
   })
+  @Put()
+  async edit(@Headers('tenant') tenantId: string, @Body() input: any) {
+    this.setTenant(tenantId);
+    const data = await this.tenantsService.edit(input);
+    return GetTenantsDto.factory(GetTenantsDto, data);
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetTenantsDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
   @Delete('/:id')
   async remove(
     @Headers('tenant') tenantId: string,

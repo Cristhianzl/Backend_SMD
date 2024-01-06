@@ -69,14 +69,34 @@ export class TenantsService {
     const data = await this.tenantsRepository.query(
       `insert into ${
         this.tenant
-      }.tenants (id, name, tenant_name, created_at) values ('${uuid()}', '${
+      }.tenants (id, name, tenant_name, tenant_img, created_at) values ('${uuid()}', '${
         input.name
-      }', '${this.createTenantName(
-        input.name,
-      )}' , NOW() - interval '3 hour') returning *`,
+      }', '${this.createTenantName(input.name)}', '${
+        input.tenant_img
+      }', NOW() - interval '3 hour') returning *`,
     );
 
     return data;
+  }
+
+  async edit(input) {
+    let values: string = '';
+
+    if (input.name) {
+      values = values + `name = '${input.name}',`;
+    }
+
+    if (input.tenant_img) {
+      values = values + `tenant_img = '${input.tenant_img}',`;
+    }
+
+    const data = await this.tenantsRepository.query(
+      `update ${this.tenant}.tenants set ${values}
+      updated_at = NOW() - interval '3 hour'
+      where id = '${input.id}' returning *`,
+    );
+
+    return data[0];
   }
 
   createTenantName(name) {

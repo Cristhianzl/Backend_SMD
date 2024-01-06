@@ -74,9 +74,12 @@ export class ProductsService {
       values = values + `'${input.category_id}',`;
       columns = columns + 'category_id,';
     }
-    if (input.discount_id) {
-      values = values + `'${input.discount_id}',`;
-      columns = columns + 'discount_id,';
+    if (input.discount_type && input.discount_value) {
+      values = values + `'${input.discount_type}',`;
+      values = values + `'${input.discount_value}',`;
+
+      columns = columns + 'discount_type,';
+      columns = columns + 'discount_value,';
     }
 
     const data = await this.productsRepository.query(
@@ -84,7 +87,7 @@ export class ProductsService {
         this.tenant
       }.products (id, name, ${columns} price, on_sale, created_at) values ('${uuid()}', '${
         input.name
-      }',${values} '${input.price ?? 0}', '${
+      }',${values} ${input.price ?? 0}, '${
         input.on_sale ?? false
       }', NOW() - interval '3 hour') returning *`,
     );
@@ -98,13 +101,15 @@ export class ProductsService {
     if (input.category_id) {
       values = values + `category_id = '${input.category_id}',`;
     }
-    if (input.discount_id) {
-      values = values + `discount_id = '${input.discount_id}',`;
+
+    if (input.discount_value && input.discount_type) {
+      values = values + `discount_value = '${input.discount_value}',`;
+      values = values + `discount_value = '${input.discount_type}',`;
     }
 
     const data = await this.productsRepository.query(
       `update ${this.tenant}.products set name = '${input.name}', ${values}
-      price = '${input.price ?? 0}', on_sale = '${input.on_sale ?? false}',
+      price = ${input.price ?? 0}, on_sale = '${input.on_sale ?? false}',
       updated_at = NOW() - interval '3 hour'
       where id = '${input.id}' returning *`,
     );

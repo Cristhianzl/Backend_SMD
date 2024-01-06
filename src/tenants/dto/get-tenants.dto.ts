@@ -38,4 +38,9 @@ export class GetTenantsDto extends BaseDto {
   @ApiProperty()
   @IsInt()
   alternativeId: number;
+
+  @ApiProperty()
+  @IsNotEmpty()
+  @IsString()
+  tenant_img: string;
 }

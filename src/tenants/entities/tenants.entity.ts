@@ -29,4 +29,7 @@ export class Tenants {
 
   @Column()
   alternativeId: number;
+
+  @Column()
+  tenant_img: string;
 }

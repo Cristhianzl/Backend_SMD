@@ -29,11 +29,6 @@ export class Products {
   category_id?: string;
 
   @Expose()
-  @IsOptional()
-  @IsUUID()
-  discount_id?: string;
-
-  @Expose()
   @IsNotEmpty()
   @IsNumber()
   price: number;
@@ -54,4 +49,14 @@ export class Products {
   @Expose()
   @IsNumber()
   alternative_id: number;
+
+  @Expose()
+  @IsString()
+  @Length(1, 255)
+  @Transform(({ value }) => value.trim())
+  discount_type: string;
+
+  @Expose()
+  @IsNumber()
+  discount_value: number;
 }
