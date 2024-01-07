@@ -29,4 +29,8 @@ export class GetMenuDto extends BaseDto {
   @Expose()
   @IsOptional()
   categories?: string[];
+
+  @Expose()
+  @IsOptional()
+  is_active?: boolean;
 }

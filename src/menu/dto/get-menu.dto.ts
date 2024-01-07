@@ -28,4 +28,9 @@ export class Menu {
 
   @UpdateDateColumn({ type: 'timestamp', nullable: true })
   updated_at: Date;
+
+  @Column({
+    type: 'boolean',
+  })
+  is_active: boolean;
 }

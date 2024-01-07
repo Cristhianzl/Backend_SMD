@@ -69,8 +69,9 @@ export class MenusService {
 
   async add(input) {
     const uuidValue = uuid();
+
     const data = await this.menusRepository.query(
-      `insert into ${this.tenant}.menus (id, name, created_at) values ('${uuidValue}', '${input.name}', NOW() - interval '3 hour') returning *`,
+      `insert into ${this.tenant}.menus (id, name, is_active, created_at) values ('${uuidValue}', '${input.name}', false,NOW() - interval '3 hour') returning *`,
     );
 
     if (input.categories.length > 0) {
@@ -87,16 +88,28 @@ export class MenusService {
   }
 
   async edit(input) {
+    let values: string = '';
+
+    if (input.is_active) {
+      values = values + `is_active = '${input.is_active}',`;
+    }
+
+    if (input.is_active === true) {
+      await this.menusRepository.query(
+        `update ${this.tenant}.menus set is_active = false where is_active = true`,
+      );
+    }
+
     const data = await this.menusRepository.query(
-      `update ${this.tenant}.menus set name = '${input.name}', updated_at = (NOW() - interval '3 hour') where id = '${input.id}' returning *`,
+      `update ${this.tenant}.menus set name = '${input.name}', ${values} updated_at = (NOW() - interval '3 hour') where id = '${input.id}' returning *`,
     );
 
-    if (input.categories.length > 0) {
+    if (input.categories?.length > 0) {
       await this.menusRepository.query(
         `delete from ${this.tenant}.menu_categories where menu_id = '${input.id}'`,
       );
 
-      input.categories.forEach(async (element) => {
+      input.categories?.forEach(async (element) => {
         await this.menusRepository.query(
           `insert into ${
             this.tenant
