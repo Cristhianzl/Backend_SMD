@@ -81,6 +81,14 @@ export class ProductsService {
       columns = columns + 'discount_type,';
       columns = columns + 'discount_value,';
     }
+    if (input.url_img) {
+      values = values + `'${input.url_img}',`;
+      columns = columns + 'url_img,';
+    }
+    if (input.description) {
+      values = values + `'${input.description}',`;
+      columns = columns + 'description,';
+    }
 
     const data = await this.productsRepository.query(
       `insert into ${
@@ -104,7 +112,15 @@ export class ProductsService {
 
     if (input.discount_value && input.discount_type) {
       values = values + `discount_value = '${input.discount_value}',`;
-      values = values + `discount_value = '${input.discount_type}',`;
+      values = values + `discount_type = '${input.discount_type}',`;
+    }
+
+    if (input.url_img) {
+      values = values + `url_img = '${input.url_img}',`;
+    }
+
+    if (input.description) {
+      values = values + `description = '${input.description}',`;
     }
 
     const data = await this.productsRepository.query(

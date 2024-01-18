@@ -23,6 +23,7 @@ export class BaseDto {
     pageIndex?,
     pageSize?,
     totalItems?,
+    hasActive?,
   ) {
     const updatedResponseData = plainToClass<T, R>(EntityDto, data, {
       ignoreDecorators: true,
@@ -33,6 +34,7 @@ export class BaseDto {
       pageIndex: pageIndex,
       pageSize: pageSize,
       count: totalItems,
+      hasActive: hasActive,
     };
 
     return returnData;

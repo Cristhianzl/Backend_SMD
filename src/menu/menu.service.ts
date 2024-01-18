@@ -52,6 +52,10 @@ export class MenusService {
     const query = `select * from ${this.tenant}.menus where 1=1 ${filtersQuery} 
     group by created_at, id, name order by created_at desc limit ${pagesize} offset ${page}`;
 
+    const numberActives = await this.menusRepository.query(
+      `select count(*) from ${this.tenant}.menus where is_active = true`,
+    );
+
     queryCount = `select count(*) from ${this.tenant}.menus where 1=1 ${
       Object.keys(filters).length ? filtersQuery : ''
     }`;
@@ -60,10 +64,12 @@ export class MenusService {
     const countData = await this.menusRepository.query(queryCount);
 
     const count = Number(countData[0]?.count ?? 0);
+    const hasActive = Number(numberActives[0]?.count ?? 0) > 0;
 
     return {
       data,
       count,
+      hasActive,
     };
   }
 

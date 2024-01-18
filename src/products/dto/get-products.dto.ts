@@ -54,4 +54,10 @@ export class GetProductsDto extends BaseDto {
 
   @Column({ type: 'numeric' })
   discount_value: number;
+
+  @Column({ type: 'varchar', nullable: true })
+  url_img?: string;
+
+  @Column({ type: 'varchar', nullable: true })
+  description?: string;
 }

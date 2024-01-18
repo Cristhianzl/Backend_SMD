@@ -102,6 +102,7 @@ export class MenusController {
       Number(pageindex),
       data.data.length,
       data.count,
+      data.hasActive,
     );
   }
 

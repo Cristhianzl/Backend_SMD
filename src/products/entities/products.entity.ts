@@ -59,4 +59,14 @@ export class Products {
   @Expose()
   @IsNumber()
   discount_value: number;
+
+  @Expose()
+  @IsOptional()
+  @IsUUID()
+  url_img?: string | null;
+
+  @Expose()
+  @IsOptional()
+  @IsUUID()
+  description?: string | null;
 }
