@@ -55,8 +55,16 @@ export class ProductsService {
       Object.keys(filters).length ? filtersQuery : ''
     }`;
 
+    const more = await this.productsRepository.query(
+      `select category_id, product_id from ${this.tenant}.category_products`,
+    );
+
     const data = await this.productsRepository.query(query);
     const countData = await this.productsRepository.query(queryCount);
+
+    data.forEach((element) => {
+      element.categories = more.filter((x) => x.product_id === element.id);
+    });
 
     const count = Number(countData[0]?.count ?? 0);
 
@@ -69,6 +77,7 @@ export class ProductsService {
   async add(input) {
     let values: string = '';
     let columns: string = '';
+    const uuidValue = uuid();
 
     if (input.category_id) {
       values = values + `'${input.category_id}',`;
@@ -90,25 +99,34 @@ export class ProductsService {
       columns = columns + 'description,';
     }
 
-    const data = await this.productsRepository.query(
-      `insert into ${
-        this.tenant
-      }.products (id, name, ${columns} price, on_sale, created_at) values ('${uuid()}', '${
-        input.name
-      }',${values} ${input.price ?? 0}, '${
-        input.on_sale ?? false
-      }', NOW() - interval '3 hour') returning *`,
-    );
+    try {
+      const data = await this.productsRepository.query(
+        `insert into ${
+          this.tenant
+        }.products (id, name, ${columns} price, on_sale, created_at) values ('${uuidValue}', '${
+          input.name
+        }',${values} ${input.price ?? 0}, '${
+          input.on_sale ?? false
+        }', NOW() - interval '3 hour') returning *`,
+      );
 
-    return data;
+      if (input?.categories?.length > 0) {
+        input.categories.forEach(async (element) => {
+          await this.productsRepository.query(
+            `insert into ${
+              this.tenant
+            }.category_products (id, product_id, category_id) values ('${uuid()}', '${uuidValue}', '${element}')`,
+          );
+        });
+      }
+      return data;
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
   async edit(input) {
     let values: string = '';
-
-    if (input.category_id) {
-      values = values + `category_id = '${input.category_id}',`;
-    }
 
     if (input.discount_value && input.discount_type) {
       values = values + `discount_value = '${input.discount_value}',`;
@@ -123,14 +141,33 @@ export class ProductsService {
       values = values + `description = '${input.description}',`;
     }
 
-    const data = await this.productsRepository.query(
-      `update ${this.tenant}.products set name = '${input.name}', ${values}
-      price = ${input.price ?? 0}, on_sale = '${input.on_sale ?? false}',
-      updated_at = NOW() - interval '3 hour'
-      where id = '${input.id}' returning *`,
-    );
+    try {
+      const data = await this.productsRepository.query(
+        `update ${this.tenant}.products set name = '${input.name}', ${values}
+        price = ${input.price ?? 0}, on_sale = '${input.on_sale ?? false}',
+        updated_at = NOW() - interval '3 hour'
+        where id = '${input.id}' returning *`,
+      );
 
-    return data[0];
+      if (input?.categories?.length > 0) {
+        await this.productsRepository.query(
+          `delete from ${this.tenant}.category_products where product_id = '${input.id}'`,
+        );
+
+        input.categories?.forEach(async (element) => {
+          await this.productsRepository.query(
+            `insert into ${
+              this.tenant
+            }.category_products (id, product_id, category_id) values ('${uuid()}', '${
+              input.id
+            }', '${element}')`,
+          );
+        });
+      }
+      return data[0];
+    } catch (e) {
+      throw new Error(e.message);
+    }
   }
 
   async remove(id: string) {

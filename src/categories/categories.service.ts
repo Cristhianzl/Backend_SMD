@@ -54,8 +54,16 @@ export class CategoriesService {
       Object.keys(filters).length ? filtersQuery : ''
     }`;
 
+    const more = await this.categoriesRepository.query(
+      `select category_id, product_id from ${this.tenant}.category_products order by order_view asc`,
+    );
+
     const data = await this.categoriesRepository.query(query);
     const countData = await this.categoriesRepository.query(queryCount);
+
+    data.forEach((element) => {
+      element.products = more.filter((x) => x.category_id === element.id);
+    });
 
     const count = Number(countData[0]?.count ?? 0);
 
@@ -66,13 +74,25 @@ export class CategoriesService {
   }
 
   async add(input) {
+    const uuidValue = uuid();
+
     const data = await this.categoriesRepository.query(
       `insert into ${
         this.tenant
-      }.categories (id, name, url_img, created_at) values ('${uuid()}', '${
+      }.categories (id, name, url_img, created_at) values ('${uuidValue}', '${
         input.name
       }', '${input.url_img ?? null}', NOW() - interval '3 hour') returning *`,
     );
+
+    if (input.products.length > 0) {
+      input.products.forEach(async (element, index) => {
+        await this.categoriesRepository.query(
+          `insert into ${
+            this.tenant
+          }.category_products (id, category_id, product_id, order_view) values ('${uuid()}', '${uuidValue}', '${element}', ${index})`,
+        );
+      });
+    }
 
     return data;
   }
@@ -85,6 +105,22 @@ export class CategoriesService {
         input.id
       }' returning *`,
     );
+
+    if (input.products?.length > 0) {
+      await this.categoriesRepository.query(
+        `delete from ${this.tenant}.category_products where category_id = '${input.id}'`,
+      );
+
+      input.products?.forEach(async (element, index) => {
+        await this.categoriesRepository.query(
+          `insert into ${
+            this.tenant
+          }.category_products (id, category_id, product_id, order_view) values ('${uuid()}', '${
+            input.id
+          }', '${element}', ${index})`,
+        );
+      });
+    }
 
     return data[0];
   }

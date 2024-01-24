@@ -56,6 +56,10 @@ export class MenusService {
       `select count(*) from ${this.tenant}.menus where is_active = true`,
     );
 
+    const more = await this.menusRepository.query(
+      `select category_id, menu_id from ${this.tenant}.menu_categories`,
+    );
+
     queryCount = `select count(*) from ${this.tenant}.menus where 1=1 ${
       Object.keys(filters).length ? filtersQuery : ''
     }`;
@@ -65,6 +69,10 @@ export class MenusService {
 
     const count = Number(countData[0]?.count ?? 0);
     const hasActive = Number(numberActives[0]?.count ?? 0) > 0;
+
+    data.forEach((element) => {
+      element.categories = more.filter((x) => x.menu_id === element.id);
+    });
 
     return {
       data,
@@ -76,21 +84,24 @@ export class MenusService {
   async add(input) {
     const uuidValue = uuid();
 
-    const data = await this.menusRepository.query(
-      `insert into ${this.tenant}.menus (id, name, is_active, created_at) values ('${uuidValue}', '${input.name}', false,NOW() - interval '3 hour') returning *`,
-    );
+    try {
+      const data = await this.menusRepository.query(
+        `insert into ${this.tenant}.menus (id, name, is_active, created_at) values ('${uuidValue}', '${input.name}', false,NOW() - interval '3 hour') returning *`,
+      );
+      if (input.categories.length > 0) {
+        input.categories.forEach(async (element) => {
+          await this.menusRepository.query(
+            `insert into ${
+              this.tenant
+            }.menu_categories (id, menu_id, category_id) values ('${uuid()}', '${uuidValue}', '${element}')`,
+          );
+        });
+      }
 
-    if (input.categories.length > 0) {
-      input.categories.forEach(async (element) => {
-        await this.menusRepository.query(
-          `insert into ${
-            this.tenant
-          }.menu_categories (id, menu_id, category_id) values ('${uuid()}', '${uuidValue}', '${element}')`,
-        );
-      });
+      return data;
+    } catch (e) {
+      throw new Error(e.message);
     }
-
-    return data;
   }
 
   async edit(input) {
