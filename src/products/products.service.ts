@@ -99,6 +99,21 @@ export class ProductsService {
       columns = columns + 'description,';
     }
 
+    if (input.is_vegan) {
+      values = values + `'${input.is_vegan}',`;
+      columns = columns + 'is_vegan,';
+    }
+
+    if (input.is_vegetarian) {
+      values = values + `'${input.is_vegetarian}',`;
+      columns = columns + 'is_vegetarian,';
+    }
+
+    if (input.is_gluten_free) {
+      values = values + `'${input.is_gluten_free}',`;
+      columns = columns + 'is_gluten_free,';
+    }
+
     try {
       const data = await this.productsRepository.query(
         `insert into ${
@@ -139,6 +154,18 @@ export class ProductsService {
 
     if (input.description) {
       values = values + `description = '${input.description}',`;
+    }
+
+    if (input.is_vegan) {
+      values = values + `is_vegan = '${input.is_vegan}',`;
+    }
+
+    if (input.is_vegetarian) {
+      values = values + `is_vegetarian = '${input.is_vegetarian}',`;
+    }
+
+    if (input.is_gluten_free) {
+      values = values + `is_gluten_free = '${input.is_gluten_free}',`;
     }
 
     try {

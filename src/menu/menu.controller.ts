@@ -32,6 +32,37 @@ export class MenusController {
 
   @ApiDefaultResponse({
     status: HttpStatus.OK,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Get('getActive')
+  async getActive(@Headers('tenant') tenantId: string) {
+    this.setTenant(tenantId);
+    return await this.menusService.getActive();
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Get('check')
+  async hasActive(@Headers('tenant') tenantId: string) {
+    this.setTenant(tenantId);
+    const data = await this.menusService.hasActive();
+    return { hasActive: data };
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
     type: GetMenuDto,
   })
   @ApiHeader({
