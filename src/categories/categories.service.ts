@@ -55,7 +55,13 @@ export class CategoriesService {
     }`;
 
     const more = await this.categoriesRepository.query(
-      `select category_id, product_id from ${this.tenant}.category_products order by order_view asc`,
+      `
+      select cp.category_id, cp.product_id, p.name
+      from ${this.tenant}.category_products cp 
+      inner join ${this.tenant}.products p 
+      on p.id = cp.product_id 
+      order by order_view asc
+      `,
     );
 
     const data = await this.categoriesRepository.query(query);
@@ -63,6 +69,9 @@ export class CategoriesService {
 
     data.forEach((element) => {
       element.products = more.filter((x) => x.category_id === element.id);
+      element.products_name = more
+        .filter((x) => x.category_id === element.id)
+        .map((x) => x.name);
     });
 
     const count = Number(countData[0]?.count ?? 0);

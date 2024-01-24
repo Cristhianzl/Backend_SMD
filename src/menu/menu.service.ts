@@ -89,11 +89,11 @@ export class MenusService {
         `insert into ${this.tenant}.menus (id, name, is_active, created_at) values ('${uuidValue}', '${input.name}', false,NOW() - interval '3 hour') returning *`,
       );
       if (input.categories.length > 0) {
-        input.categories.forEach(async (element) => {
+        input.categories.forEach(async (element, index) => {
           await this.menusRepository.query(
             `insert into ${
               this.tenant
-            }.menu_categories (id, menu_id, category_id) values ('${uuid()}', '${uuidValue}', '${element}')`,
+            }.menu_categories (id, menu_id, category_id, order_view) values ('${uuid()}', '${uuidValue}', '${element}', ${index})`,
           );
         });
       }
