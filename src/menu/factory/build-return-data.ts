@@ -1,6 +1,6 @@
 export const buildFinalMenu = (data: any) => {
   const groupedMenu = data.reduce(
-    (menu, item) => {
+    (menu, item, index) => {
       const categoryId = item.category_id;
 
       // Check if a category with the given category_id already exists in the menu
@@ -29,6 +29,7 @@ export const buildFinalMenu = (data: any) => {
           category_order_view: item.category_order_view,
           category_name: item.category_name,
           category_img: item.category_img,
+          current: index === 0 ? true : false,
           products: [
             {
               product_order_view: item.product_order_view,
