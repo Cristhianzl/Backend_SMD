@@ -27,6 +27,14 @@ export class AuthGuard implements CanActivate {
     } catch {
       throw new UnauthorizedException();
     }
+
+    const health = await this.jwtService.verifyAsync(token);
+    const expirationDate = new Date(health.exp * 1000);
+    const now = new Date();
+    if (expirationDate < now) {
+      throw new UnauthorizedException();
+    }
+
     return true;
   }
 

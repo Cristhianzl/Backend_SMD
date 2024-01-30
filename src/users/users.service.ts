@@ -11,23 +11,12 @@ import * as bcrypt from 'bcrypt';
 export class UsersService {
   tenant: string;
 
-  private readonly users = [
-    {
-      userId: 1,
-      username: 'john',
-      password: 'changeme',
-    },
-    {
-      userId: 2,
-      username: 'maria',
-      password: 'guess',
-    },
-  ];
-
   constructor(
     @InjectRepository(User)
     private readonly usersRepository: Repository<User>,
-  ) {}
+  ) {
+    this.setTenant('public');
+  }
 
   setTenant(tenant: string) {
     this.tenant = 'public';
@@ -128,6 +117,8 @@ export class UsersService {
   }
 
   async findOne(username: string): Promise<any> {
-    return this.users.find((user) => user.username === username);
+    return await this.usersRepository.query(
+      `select * from ${this.tenant}.users where username = '${username}'`,
+    );
   }
 }
