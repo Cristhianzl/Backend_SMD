@@ -1,19 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { createCipheriv, createDecipheriv, randomBytes, scrypt } from 'crypto';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { User } from 'src/entities/user.entity';
-import { Repository } from 'typeorm';
-import { promisify } from 'util';
 import { v4 as uuid } from 'uuid';
 import * as bcrypt from 'bcrypt';
-
+import { Tenant } from 'src/entities/tenant.entity';
+import { TenantsService } from 'src/tenants/tenants.service';
+import { JwtService } from '@nestjs/jwt';
+import { Client } from 'pg';
+import { InjectConnection } from 'nest-postgres';
 @Injectable()
 export class UsersService {
   tenant: string;
 
   constructor(
-    @InjectRepository(User)
-    private readonly usersRepository: Repository<User>,
+    @InjectConnection('dbConnection')
+    private dbConnection: Client,
+    private readonly tenantService: TenantsService,
+    private jwtService: JwtService,
   ) {
     this.setTenant('public');
   }
@@ -23,14 +25,14 @@ export class UsersService {
   }
 
   async listAll() {
-    const data = await this.usersRepository.query(
+    const data = await this.dbConnection.query(
       `select * from ${this.tenant}.users order by created_at desc`,
     );
-    const countData = await this.usersRepository.query(
+    const countData = await this.dbConnection.query(
       `select count(*) from ${this.tenant}.users `,
     );
 
-    const count = Number(countData[0].count);
+    const count = Number(countData?.rows[0]?.count ?? 0);
 
     return {
       data,
@@ -39,7 +41,7 @@ export class UsersService {
   }
 
   async find(id: string) {
-    return await this.usersRepository.query(
+    return await this.dbConnection.query(
       `select * from ${this.tenant}.users where id = '${id}'`,
     );
   }
@@ -59,10 +61,10 @@ export class UsersService {
       Object.keys(filters).length ? filtersQuery : ''
     }`;
 
-    const data = await this.usersRepository.query(query);
-    const countData = await this.usersRepository.query(queryCount);
+    const data = await this.dbConnection.query(query);
+    const countData = await this.dbConnection.query(queryCount);
 
-    const count = Number(countData[0]?.count ?? 0);
+    const count = Number(countData?.rowCount ?? 0);
 
     return {
       data,
@@ -71,22 +73,75 @@ export class UsersService {
   }
 
   async add(input) {
+    const user = await this.dbConnection.query(
+      `select * from ${this.tenant}.users where username = '${input.username}'`,
+    );
+
+    const email = await this.dbConnection.query(
+      `select * from ${this.tenant}.users where email = '${input.email}'`,
+    );
+
+    if (user.length > 0) {
+      throw new HttpException(
+        'Usuário ou Email já cadastrado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    if (email.length > 0) {
+      throw new HttpException(
+        'Usuário ou Email já cadastrado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const tenantCreation = {
+      name: input.username,
+      tenant_name: input.company,
+      tenant_img: null,
+    };
+
+    const newTenant = await this.tenantService.add(tenantCreation);
+
+    if (newTenant.length === 0) {
+      throw new HttpException(
+        'Ocorreu um erro ao realizar seu cadastro, tente novamente.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    try {
+      await this.tenantService.runMigrations(newTenant[0].tenant_name);
+    } catch (e) {
+      await this.dbConnection.query(
+        `delete from public.tenants where id = '${newTenant[0].id}'`,
+      );
+      throw new HttpException(
+        'Ocorreu um erro ao realizar seu cadastro, tente novamente.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(input.password, saltOrRounds);
 
-    let data = await this.usersRepository.query(
-      `insert into ${
-        this.tenant
-      }.users (id, username, password, is_admin, tenant_id, name, email, created_at) values ('${uuid()}', 
-      '${input.username}', '${hash}', '${input.is_admin}', '${
-        input.tenant_id
-      }', '${input.name}', '${input.email}'
+    let data = await this.dbConnection.query(
+      `insert into public.users (id, username, password, is_admin, tenant_id, name, email, created_at) values ('${uuid()}', 
+      '${input.username}', '${hash}', 'false', '${newTenant[0].id}', '${
+        input.username
+      }', '${input.email}'
       , NOW() - interval '3 hour') returning *`,
     );
 
-    data[0].password = '*********';
+    const returnData = {
+      id: data[0].id,
+      username: data[0].username,
+      name: data[0].name,
+      email: data[0].email,
+      tenant: newTenant[0].tenant_name,
+    };
 
-    return data;
+    return returnData;
   }
 
   async edit(input) {
@@ -99,7 +154,7 @@ export class UsersService {
       values = values + `email = '${input.email}',`;
     }
 
-    const data = await this.usersRepository.query(
+    const data = await this.dbConnection.query(
       `update ${this.tenant}.users set ${values}
       updated_at = NOW() - interval '3 hour'
       where id = '${input.id}' returning *`,
@@ -108,17 +163,34 @@ export class UsersService {
     return data[0];
   }
 
-  async remove(id: string) {
-    const data = await this.usersRepository.query(
-      `delete from ${this.tenant}.users where id = '${id}' returning *`,
+  async remove(token: string) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    const data = await this.dbConnection.query(
+      `delete from ${this.tenant}.users where id = '${access.id}' returning *`,
     );
 
     return data;
   }
 
   async findOne(username: string): Promise<any> {
-    return await this.usersRepository.query(
-      `select * from ${this.tenant}.users where username = '${username}'`,
+    return await this.dbConnection.query(
+      `
+      select ${this.tenant}.users.*, ${this.tenant}.tenants.tenant_name from ${this.tenant}.users
+      inner join ${this.tenant}.tenants on ${this.tenant}.users.tenant_id = ${this.tenant}.tenants.id where username = '${username}'
+      `,
+    );
+  }
+
+  async findOneEmail(email: string): Promise<any> {
+    return await this.dbConnection.query(
+      `select ${this.tenant}.users.*, ${this.tenant}.tenants.tenant_name from ${this.tenant}.users
+      inner join ${this.tenant}.tenants on ${this.tenant}.users.tenant_id = ${this.tenant}.tenants.id where email = '${email}'`,
+    );
+  }
+
+  async findOneById(id: string): Promise<any> {
+    return await this.dbConnection.query(
+      `select * from ${this.tenant}.users where id = '${id}'`,
     );
   }
 }

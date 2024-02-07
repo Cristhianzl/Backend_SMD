@@ -1,18 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from 'src/entities/category.entity';
-import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
-import { Stores } from './dto/get-stores.dto';
-import { Store } from 'src/entities/store.entity';
-
+import { Client } from 'pg';
+import { InjectConnection } from 'nest-postgres';
 @Injectable()
 export class StoresService {
   tenant: string;
 
   constructor(
-    @InjectRepository(Store)
-    private readonly storesRepository: Repository<Store>,
+    @InjectConnection('dbConnection')
+    private dbConnection: Client,
   ) {}
 
   setTenant(tenant: string) {
@@ -20,14 +16,14 @@ export class StoresService {
   }
 
   async listAll() {
-    const data = await this.storesRepository.query(
+    const data = await this.dbConnection.query(
       `select * from ${this.tenant}.stores order by created_at desc`,
     );
-    const countData = await this.storesRepository.query(
+    const countData = await this.dbConnection.query(
       `select count(*) from ${this.tenant}.stores `,
     );
 
-    const count = Number(countData[0].count);
+    const count = Number(countData?.rows[0]?.count ?? 0);
 
     return {
       data,
@@ -36,7 +32,7 @@ export class StoresService {
   }
 
   async find(id: string) {
-    return await this.storesRepository.query(
+    return await this.dbConnection.query(
       `select * from ${this.tenant}.stores where id = '${id}'`,
     );
   }
@@ -56,10 +52,10 @@ export class StoresService {
       Object.keys(filters).length ? filtersQuery : ''
     }`;
 
-    const data = await this.storesRepository.query(query);
-    const countData = await this.storesRepository.query(queryCount);
+    const data = await this.dbConnection.query(query);
+    const countData = await this.dbConnection.query(queryCount);
 
-    const count = Number(countData[0]?.count ?? 0);
+    const count = Number(countData?.rowCount ?? 0);
 
     return {
       data,
@@ -68,7 +64,7 @@ export class StoresService {
   }
 
   async add(input) {
-    const data = await this.storesRepository.query(
+    const data = await this.dbConnection.query(
       `insert into ${
         this.tenant
       }.stores (id, name, created_at) values ('${uuid()}', '${
@@ -80,7 +76,7 @@ export class StoresService {
   }
 
   async edit(input) {
-    const data = await this.storesRepository.query(
+    const data = await this.dbConnection.query(
       `update ${this.tenant}.stores set name = '${input.name}' where id = '${input.id}' returning *`,
     );
 
@@ -88,7 +84,7 @@ export class StoresService {
   }
 
   async remove(id: string) {
-    const data = await this.storesRepository.query(
+    const data = await this.dbConnection.query(
       `delete from ${this.tenant}.stores where id = '${id}' returning *`,
     );
 

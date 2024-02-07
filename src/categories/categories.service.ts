@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from 'src/entities/category.entity';
-import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
+import { Client } from 'pg';
+import { InjectConnection } from 'nest-postgres';
 
 @Injectable()
 export class CategoriesService {
   tenant: string;
 
   constructor(
-    @InjectRepository(Category)
-    private readonly categoriesRepository: Repository<Category>,
+    @InjectConnection('dbConnection')
+    private dbConnection: Client,
   ) {}
 
   setTenant(tenant: string) {
@@ -18,14 +17,14 @@ export class CategoriesService {
   }
 
   async listAll() {
-    const data = await this.categoriesRepository.query(
+    const data = await this.dbConnection.query(
       `select * from ${this.tenant}.categories order by created_at desc`,
     );
-    const countData = await this.categoriesRepository.query(
+    const countData = await this.dbConnection.query(
       `select count(*) from ${this.tenant}.categories `,
     );
 
-    const count = Number(countData[0].count);
+    const count = Number(countData?.rows[0]?.count ?? 0);
 
     return {
       data,
@@ -34,7 +33,7 @@ export class CategoriesService {
   }
 
   async find(id: string) {
-    return await this.categoriesRepository.query(
+    return await this.dbConnection.query(
       `select * from ${this.tenant}.categories where id = '${id}'`,
     );
   }
@@ -54,7 +53,7 @@ export class CategoriesService {
       Object.keys(filters).length ? filtersQuery : ''
     }`;
 
-    const more = await this.categoriesRepository.query(
+    const more = await this.dbConnection.query(
       `
       select cp.category_id, cp.product_id, p.name
       from ${this.tenant}.category_products cp 
@@ -64,17 +63,19 @@ export class CategoriesService {
       `,
     );
 
-    const data = await this.categoriesRepository.query(query);
-    const countData = await this.categoriesRepository.query(queryCount);
+    const data = await this.dbConnection.query(query);
+    const countData = await this.dbConnection.query(queryCount);
 
-    data.forEach((element) => {
-      element.products = more.filter((x) => x.category_id === element.id);
-      element.products_name = more
-        .filter((x) => x.category_id === element.id)
+    data?.rows?.forEach((element) => {
+      element.products = more?.rows?.filter(
+        (x) => x.category_id === element.id,
+      );
+      element.products_name = more?.rows
+        ?.filter((x) => x.category_id === element.id)
         .map((x) => x.name);
     });
 
-    const count = Number(countData[0]?.count ?? 0);
+    const count = Number(countData?.rows[0]?.count ?? 0);
 
     return {
       data,
@@ -85,7 +86,7 @@ export class CategoriesService {
   async add(input) {
     const uuidValue = uuid();
 
-    const data = await this.categoriesRepository.query(
+    const data = await this.dbConnection.query(
       `insert into ${
         this.tenant
       }.categories (id, name, url_img, created_at) values ('${uuidValue}', '${
@@ -95,7 +96,7 @@ export class CategoriesService {
 
     if (input.products.length > 0) {
       input.products.forEach(async (element, index) => {
-        await this.categoriesRepository.query(
+        await this.dbConnection.query(
           `insert into ${
             this.tenant
           }.category_products (id, category_id, product_id, order_view) values ('${uuid()}', '${uuidValue}', '${element}', ${index})`,
@@ -107,7 +108,7 @@ export class CategoriesService {
   }
 
   async edit(input) {
-    const data = await this.categoriesRepository.query(
+    const data = await this.dbConnection.query(
       `update ${this.tenant}.categories set name = '${
         input.name
       }', url_img = '${input.url_img ?? null}' where id = '${
@@ -116,12 +117,12 @@ export class CategoriesService {
     );
 
     if (input.products?.length > 0) {
-      await this.categoriesRepository.query(
+      await this.dbConnection.query(
         `delete from ${this.tenant}.category_products where category_id = '${input.id}'`,
       );
 
       input.products?.forEach(async (element, index) => {
-        await this.categoriesRepository.query(
+        await this.dbConnection.query(
           `insert into ${
             this.tenant
           }.category_products (id, category_id, product_id, order_view) values ('${uuid()}', '${
@@ -135,7 +136,7 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
-    const data = await this.categoriesRepository.query(
+    const data = await this.dbConnection.query(
       `delete from ${this.tenant}.categories where id = '${id}' returning *`,
     );
 

@@ -19,12 +19,16 @@ import {
 } from '@nestjs/swagger';
 import { StoresService } from './stores.service';
 import { GetStoresDto } from './entities/stores.entity';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('stores')
 @Controller('stores')
 @ApiExtraModels(GetStoresDto)
 export class StoresController {
-  constructor(private readonly storesService: StoresService) {}
+  constructor(
+    private readonly storesService: StoresService,
+    private jwtService: JwtService,
+  ) {}
 
   setTenant(tenant: string) {
     this.storesService.setTenant(tenant);
@@ -41,8 +45,9 @@ export class StoresController {
     required: true,
   })
   @Get()
-  async findAll(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  async findAll(@Headers('authorization') token: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.storesService.listAll();
     return GetStoresDto.factoryPaginate(
       GetStoresDto,
@@ -65,10 +70,11 @@ export class StoresController {
   })
   @Get('/:id')
   async findOne(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.storesService.find(id);
     return GetStoresDto.factory(GetStoresDto, data);
   }
@@ -85,12 +91,13 @@ export class StoresController {
   })
   @Get('/:pageindex/:pagesize')
   async findWithFilter(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Body() filters: any,
     @Param('pageindex') pageindex: number,
     @Param('pagesize') pagesize: number,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.storesService.findWithFilter(
       filters,
       pageindex,
@@ -116,8 +123,9 @@ export class StoresController {
     required: true,
   })
   @Post()
-  async add(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async add(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.storesService.add(input);
     return GetStoresDto.factory(GetStoresDto, data);
   }
@@ -133,8 +141,9 @@ export class StoresController {
     required: true,
   })
   @Put()
-  async edit(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async edit(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.storesService.edit(input);
     return GetStoresDto.factory(GetStoresDto, data);
   }
@@ -151,10 +160,11 @@ export class StoresController {
   })
   @Delete('/:id')
   async remove(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.storesService.remove(id);
     return GetStoresDto.factory(GetStoresDto, data[0]);
   }

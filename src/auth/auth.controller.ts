@@ -49,4 +49,15 @@ export class AuthController {
   getProfile(@Request() req) {
     return req.user;
   }
+
+  @ApiHeader({
+    name: '',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Post('getUser')
+  getUser(@Body() body: any) {
+    return this.authService.getUser(body);
+  }
 }

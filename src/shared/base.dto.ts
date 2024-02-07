@@ -8,6 +8,10 @@ export class BaseDto {
     code?,
     message?,
   ) {
+    if ((data as any)?.rows) {
+      data = (data as any)?.rows;
+    }
+
     const updatedResponseData = plainToClass<T, R>(EntityDto, data, {
       ignoreDecorators: true,
     });
@@ -25,6 +29,10 @@ export class BaseDto {
     totalItems?,
     hasActive?,
   ) {
+    if ((data as any)?.rows) {
+      data = (data as any)?.rows;
+    }
+
     const updatedResponseData = plainToClass<T, R>(EntityDto, data, {
       ignoreDecorators: true,
     });

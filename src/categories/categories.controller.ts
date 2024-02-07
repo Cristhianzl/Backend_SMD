@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -19,12 +20,17 @@ import {
 } from '@nestjs/swagger';
 import { GetCategoriesDto } from './entities/categories.entity';
 import { CategoriesService } from './categories.service';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('categories')
 @Controller('categories')
 @ApiExtraModels(GetCategoriesDto)
 export class CategoriesController {
-  constructor(private readonly categoriesService: CategoriesService) {}
+  constructor(
+    private readonly categoriesService: CategoriesService,
+    private jwtService: JwtService,
+  ) {}
 
   setTenant(tenant: string) {
     this.categoriesService.setTenant(tenant);
@@ -41,12 +47,12 @@ export class CategoriesController {
     required: true,
   })
   @Get()
-  async findAll(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  async findAll(@Headers('authorization') token: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.categoriesService.listAll();
     return GetCategoriesDto.factoryPaginate(
-      GetCategoriesDto,
-      data.data,
+      data.data.row,
       1,
       data.count,
       data.count,
@@ -65,10 +71,11 @@ export class CategoriesController {
   })
   @Get('/:id')
   async findOne(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.categoriesService.find(id);
     return GetCategoriesDto.factory(GetCategoriesDto, data);
   }
@@ -84,13 +91,15 @@ export class CategoriesController {
     required: true,
   })
   @Get('/:pageindex/:pagesize')
+  @UseGuards(AuthGuard)
   async findWithFilter(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Body() filters: any,
     @Param('pageindex') pageindex: number,
     @Param('pagesize') pagesize: number,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.categoriesService.findWithFilter(
       filters,
       pageindex,
@@ -98,9 +107,9 @@ export class CategoriesController {
     );
     return GetCategoriesDto.factoryPaginate(
       GetCategoriesDto,
-      data.data,
+      data.data.rows,
       Number(pageindex),
-      data.data.length,
+      data.data.rowCount,
       data.count,
     );
   }
@@ -115,9 +124,11 @@ export class CategoriesController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Post()
-  async add(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async add(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.categoriesService.add(input);
     return GetCategoriesDto.factory(GetCategoriesDto, data);
   }
@@ -132,9 +143,11 @@ export class CategoriesController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Put()
-  async edit(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async edit(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.categoriesService.edit(input);
     return GetCategoriesDto.factory(GetCategoriesDto, data);
   }
@@ -149,12 +162,14 @@ export class CategoriesController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Delete('/:id')
   async remove(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.categoriesService.remove(id);
     return GetCategoriesDto.factory(GetCategoriesDto, data[0]);
   }

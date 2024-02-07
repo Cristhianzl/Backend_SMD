@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -19,12 +20,17 @@ import {
 } from '@nestjs/swagger';
 import { GetMenuDto } from './entities/menu.entity';
 import { MenusService } from './menu.service';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('menus')
 @Controller('menus')
 @ApiExtraModels(GetMenuDto)
 export class MenusController {
-  constructor(private readonly menusService: MenusService) {}
+  constructor(
+    private readonly menusService: MenusService,
+    private jwtService: JwtService,
+  ) {}
 
   setTenant(tenant: string) {
     this.menusService.setTenant(tenant);
@@ -54,9 +60,11 @@ export class MenusController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Get('check')
-  async hasActive(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  async hasActive(@Headers('authorization') token: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.menusService.hasActive();
     return { hasActive: data };
   }
@@ -71,9 +79,11 @@ export class MenusController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Get()
-  async findAll(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  async findAll(@Headers('authorization') token: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.menusService.listAll();
     return GetMenuDto.factoryPaginate(
       GetMenuDto,
@@ -94,12 +104,14 @@ export class MenusController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Get('/:id')
   async findOne(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.menusService.find(id);
     return GetMenuDto.factory(GetMenuDto, data);
   }
@@ -114,14 +126,16 @@ export class MenusController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Get('/:pageindex/:pagesize')
   async findWithFilter(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Body() filters: any,
     @Param('pageindex') pageindex: number,
     @Param('pagesize') pagesize: number,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.menusService.findWithFilter(
       filters,
       pageindex,
@@ -129,9 +143,9 @@ export class MenusController {
     );
     return GetMenuDto.factoryPaginate(
       GetMenuDto,
-      data.data,
+      data?.data?.rows,
       Number(pageindex),
-      data.data.length,
+      data?.data?.rowCount,
       data.count,
       data.hasActive,
     );
@@ -147,9 +161,11 @@ export class MenusController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Post()
-  async add(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async add(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.menusService.add(input);
     return GetMenuDto.factory(GetMenuDto, data);
   }
@@ -164,9 +180,11 @@ export class MenusController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Put()
-  async edit(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async edit(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.menusService.edit(input);
     return GetMenuDto.factory(GetMenuDto, data);
   }
@@ -181,12 +199,14 @@ export class MenusController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Delete('/:id')
   async remove(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.menusService.remove(id);
     return GetMenuDto.factory(GetMenuDto, data[0]);
   }

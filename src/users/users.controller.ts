@@ -41,8 +41,8 @@ export class UsersController {
     required: true,
   })
   @Get()
-  async findAll(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  async findAll(@Headers('authorization') token: any) {
+    this.setTenant(token);
     const data = await this.userService.listAll();
     return GetUsersDto.factoryPaginate(
       GetUsersDto,
@@ -65,10 +65,10 @@ export class UsersController {
   })
   @Get('/:id')
   async findOne(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    this.setTenant(token);
     const data = await this.userService.find(id);
     return GetUsersDto.factory(GetUsersDto, data);
   }
@@ -85,12 +85,12 @@ export class UsersController {
   })
   @Get('/:pageindex/:pagesize')
   async findWithFilter(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Body() filters: any,
     @Param('pageindex') pageindex: number,
     @Param('pagesize') pagesize: number,
   ) {
-    this.setTenant(tenantId);
+    this.setTenant(token);
     const data = await this.userService.findWithFilter(
       filters,
       pageindex,
@@ -116,8 +116,8 @@ export class UsersController {
     required: true,
   })
   @Post()
-  async add(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async add(@Headers('authorization') token: any, @Body() input: any) {
+    this.setTenant(token);
     const data = await this.userService.add(input);
     return GetUsersDto.factory(GetUsersDto, data);
   }
@@ -133,8 +133,8 @@ export class UsersController {
     required: true,
   })
   @Put()
-  async edit(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async edit(@Headers('authorization') token: any, @Body() input: any) {
+    this.setTenant(token);
     const data = await this.userService.edit(input);
     return GetUsersDto.factory(GetUsersDto, data);
   }
@@ -151,10 +151,10 @@ export class UsersController {
   })
   @Delete('/:id')
   async remove(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    this.setTenant(token);
     const data = await this.userService.remove(id);
     return GetUsersDto.factory(GetUsersDto, data[0]);
   }

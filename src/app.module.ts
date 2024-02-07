@@ -7,22 +7,20 @@ import { CategoriesModule } from './categories/categories.module';
 import { DiscountsModule } from './discounts/discounts.module';
 import { ProductsModule } from './products/products.module';
 import { StoresModule } from './stores/stores.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { MenusModule } from './menu/menu.module';
+import { HttpExceptionFilter } from './shared/http-exception.filter';
+import { APP_FILTER } from '@nestjs/core';
+import { PostgresModule } from 'nest-postgres';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: process.env.DB_HOST,
-      port: Number(process.env.DB_PORT),
-      username: 'postgres',
-      password: 'password',
-      database: 'menudigital',
-      synchronize: false,
-      logging: true,
-      autoLoadEntities: true,
-    }),
+    PostgresModule.forRoot(
+      {
+        connectionString:
+          'postgresql://postgres:password@localhost/menudigital',
+      },
+      'dbConnection',
+    ),
     AuthModule,
     UsersModule,
     TenantsModule,
@@ -33,6 +31,11 @@ import { MenusModule } from './menu/menu.module';
     MenusModule,
   ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
+    },
+  ],
 })
 export class AppModule {}

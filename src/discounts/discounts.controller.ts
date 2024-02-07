@@ -1,4 +1,10 @@
-import { Controller, Get, HttpStatus, Headers } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  HttpStatus,
+  Headers,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiDefaultResponse,
   ApiExtraModels,
@@ -8,12 +14,17 @@ import {
 } from '@nestjs/swagger';
 import { DiscountsService } from './discounts.service';
 import { GetDiscountDto } from './dto/get-discounts.dto';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('discounts')
 @Controller('discounts')
 @ApiExtraModels(GetDiscountDto)
 export class DiscountsController {
-  constructor(private readonly discountsService: DiscountsService) {}
+  constructor(
+    private readonly discountsService: DiscountsService,
+    private jwtService: JwtService,
+  ) {}
 
   setTenant(tenant: string) {
     this.discountsService.setTenant(tenant);
@@ -31,8 +42,10 @@ export class DiscountsController {
     required: true,
   })
   @Get()
-  async findAll(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  @UseGuards(AuthGuard)
+  async findAll(@Headers('authorization') token: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const discounts = await this.discountsService.listAll();
     return GetDiscountDto.factory(GetDiscountDto, discounts);
   }

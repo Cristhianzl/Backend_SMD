@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -18,12 +19,17 @@ import {
 } from '@nestjs/swagger';
 import { GetTenantsDto } from './dto/get-tenants.dto';
 import { TenantsService } from './tenants.service';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('tenants')
 @Controller('tenants')
 @ApiExtraModels(GetTenantsDto)
 export class TenantsController {
-  constructor(private readonly tenantsService: TenantsService) {}
+  constructor(
+    private readonly tenantsService: TenantsService,
+    private jwtService: JwtService,
+  ) {}
 
   setTenant(tenant: string) {
     this.tenantsService.setTenant(tenant);
@@ -40,8 +46,9 @@ export class TenantsController {
     required: true,
   })
   @Get()
-  async findAll(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  async findAll(@Headers('authorization') token: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.tenantsService.listAll();
     return GetTenantsDto.factoryPaginate(
       GetTenantsDto,
@@ -62,12 +69,29 @@ export class TenantsController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
+  @Get('/findByName')
+  async findByName(@Headers('authorization') token: any) {
+    const data = await this.tenantsService.findByName(token);
+    return GetTenantsDto.factory(GetTenantsDto, data);
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetTenantsDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
   @Get('/:id')
   async findOne(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    this.setTenant(token);
     const data = await this.tenantsService.find(id);
     return GetTenantsDto.factory(GetTenantsDto, data);
   }
@@ -84,12 +108,12 @@ export class TenantsController {
   })
   @Get('/:pageindex/:pagesize')
   async findWithFilter(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Body() filters: any,
     @Param('pageindex') pageindex: number,
     @Param('pagesize') pagesize: number,
   ) {
-    this.setTenant(tenantId);
+    this.setTenant(token);
     const data = await this.tenantsService.findWithFilter(
       filters,
       pageindex,
@@ -115,8 +139,8 @@ export class TenantsController {
     required: true,
   })
   @Post()
-  async add(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async add(@Headers('authorization') token: any, @Body() input: any) {
+    this.setTenant(token);
     const data = await this.tenantsService.add(input);
     return GetTenantsDto.factory(GetTenantsDto, data);
   }
@@ -132,8 +156,8 @@ export class TenantsController {
     required: true,
   })
   @Put()
-  async edit(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async edit(@Headers('authorization') token: any, @Body() input: any) {
+    this.setTenant(token);
     const data = await this.tenantsService.edit(input);
     return GetTenantsDto.factory(GetTenantsDto, data);
   }
@@ -150,10 +174,10 @@ export class TenantsController {
   })
   @Delete('/:id')
   async remove(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    this.setTenant(token);
     const data = await this.tenantsService.remove(id);
     return GetTenantsDto.factory(GetTenantsDto, data[0]);
   }

@@ -1,19 +1,16 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from 'src/entities/category.entity';
-import { Repository } from 'typeorm';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
-import { Menu } from './dto/get-menu.dto';
-import { Store } from 'src/entities/store.entity';
 import { buildFinalMenu } from './factory/build-return-data';
+import { Client } from 'pg';
+import { InjectConnection } from 'nest-postgres';
 
 @Injectable()
 export class MenusService {
   tenant: string;
 
   constructor(
-    @InjectRepository(Menu)
-    private readonly menusRepository: Repository<Menu>,
+    @InjectConnection('dbConnection')
+    private dbConnection: Client,
   ) {}
 
   setTenant(tenant: string) {
@@ -21,14 +18,14 @@ export class MenusService {
   }
 
   async listAll() {
-    const data = await this.menusRepository.query(
+    const data = await this.dbConnection.query(
       `select * from ${this.tenant}.menus order by created_at desc`,
     );
-    const countData = await this.menusRepository.query(
+    const countData = await this.dbConnection.query(
       `select count(*) from ${this.tenant}.menus `,
     );
 
-    const count = Number(countData[0].count);
+    const count = Number(countData?.rows[0]?.count ?? 0);
 
     return {
       data,
@@ -37,7 +34,7 @@ export class MenusService {
   }
 
   async find(id: string) {
-    return await this.menusRepository.query(
+    return await this.dbConnection.query(
       `select * from ${this.tenant}.menus where id = '${id}'`,
     );
   }
@@ -51,13 +48,13 @@ export class MenusService {
     }
 
     const query = `select * from ${this.tenant}.menus where 1=1 ${filtersQuery} 
-    group by created_at, id, name order by created_at desc limit ${pagesize} offset ${page}`;
+    group by created_at, id, name order by is_active desc, created_at desc limit ${pagesize} offset ${page}`;
 
-    const numberActives = await this.menusRepository.query(
+    const numberActives = await this.dbConnection.query(
       `select count(*) from ${this.tenant}.menus where is_active = true`,
     );
 
-    const more = await this.menusRepository.query(
+    const more = await this.dbConnection.query(
       `select category_id, menu_id from ${this.tenant}.menu_categories`,
     );
 
@@ -65,16 +62,15 @@ export class MenusService {
       Object.keys(filters).length ? filtersQuery : ''
     }`;
 
-    const data = await this.menusRepository.query(query);
-    const countData = await this.menusRepository.query(queryCount);
+    const data = await this.dbConnection.query(query);
+    const countData = await this.dbConnection.query(queryCount);
 
-    const count = Number(countData[0]?.count ?? 0);
+    const count = Number(countData?.rows[0].count ?? 0);
     const hasActive = Number(numberActives[0]?.count ?? 0) > 0;
 
-    data.forEach((element) => {
-      element.categories = more.filter((x) => x.menu_id === element.id);
+    data?.rows?.forEach((element) => {
+      element.categories = more?.rows?.filter((x) => x.menu_id === element.id);
     });
-
     return {
       data,
       count,
@@ -83,15 +79,16 @@ export class MenusService {
   }
 
   async add(input) {
+    debugger;
     const uuidValue = uuid();
 
     try {
-      const data = await this.menusRepository.query(
+      const data = await this.dbConnection.query(
         `insert into ${this.tenant}.menus (id, name, is_active, created_at) values ('${uuidValue}', '${input.name}', false, NOW() - interval '3 hour') returning *`,
       );
       if (input?.categories?.length > 0) {
         input.categories.forEach(async (element, index) => {
-          await this.menusRepository.query(
+          await this.dbConnection.query(
             `insert into ${
               this.tenant
             }.menu_categories (id, menu_id, category_id, order_view) values ('${uuid()}', '${uuidValue}', '${element}', ${index})`,
@@ -113,22 +110,22 @@ export class MenusService {
     }
 
     if (input.is_active === true) {
-      await this.menusRepository.query(
+      await this.dbConnection.query(
         `update ${this.tenant}.menus set is_active = false where is_active = true`,
       );
     }
 
-    const data = await this.menusRepository.query(
+    const data = await this.dbConnection.query(
       `update ${this.tenant}.menus set name = '${input.name}', ${values} updated_at = (NOW() - interval '3 hour') where id = '${input.id}' returning *`,
     );
 
     if (input?.categories?.length > 0) {
-      await this.menusRepository.query(
+      await this.dbConnection.query(
         `delete from ${this.tenant}.menu_categories where menu_id = '${input.id}'`,
       );
 
       input.categories?.forEach(async (element) => {
-        await this.menusRepository.query(
+        await this.dbConnection.query(
           `insert into ${
             this.tenant
           }.menu_categories (id, menu_id, category_id) values ('${uuid()}', '${
@@ -142,11 +139,11 @@ export class MenusService {
   }
 
   async remove(id: string) {
-    const data = await this.menusRepository.query(
+    const data = await this.dbConnection.query(
       `delete from ${this.tenant}.menus where id = '${id}' returning *`,
     );
 
-    await this.menusRepository.query(
+    await this.dbConnection.query(
       `delete from ${this.tenant}.menu_categories where menu_id = '${id}'`,
     );
 
@@ -154,19 +151,19 @@ export class MenusService {
   }
 
   async hasActive() {
-    const data = await this.menusRepository.query(
+    const data = await this.dbConnection.query(
       `select from ${this.tenant}.menus where is_active = true`,
     );
     return data.length > 0;
   }
 
   async getActive() {
-    const hasActive = await this.menusRepository.query(
+    const hasActive = await this.dbConnection.query(
       `select from ${this.tenant}.menus where is_active = true`,
     );
 
-    if (hasActive.length > 0) {
-      const data = await this.menusRepository.query(
+    if (hasActive.rowCount > 0) {
+      const data = await this.dbConnection.query(
         `SELECT m.NAME,
         mc.order_view AS category_order_view,
         cp.order_view AS product_order_view,
@@ -197,10 +194,15 @@ export class MenusService {
                 ON p.id = cp.product_id
  WHERE  m.is_active = true order by mc.order_view , cp.order_view `,
       );
-      const menuFinal = buildFinalMenu(data);
+
+      if (data.rowCount === 0) {
+        throw new HttpException('Nenhum menu ativo.', HttpStatus.NOT_FOUND);
+      }
+
+      const menuFinal = buildFinalMenu(data.rows);
       return menuFinal;
     } else {
-      throw new Error('Nenhum menu ativo.');
+      throw new HttpException('Nenhum menu ativo.', HttpStatus.NOT_FOUND);
     }
   }
 }

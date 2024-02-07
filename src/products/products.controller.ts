@@ -9,6 +9,7 @@ import {
   Post,
   Put,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -19,12 +20,17 @@ import {
 } from '@nestjs/swagger';
 import { GetProductsDto } from './dto/get-products.dto';
 import { ProductsService } from './products.service';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { JwtService } from '@nestjs/jwt';
 
 @ApiTags('products')
 @Controller('products')
 @ApiExtraModels(GetProductsDto)
 export class ProductsController {
-  constructor(private readonly productsService: ProductsService) {}
+  constructor(
+    private readonly productsService: ProductsService,
+    private jwtService: JwtService,
+  ) {}
 
   setTenant(tenant: string) {
     this.productsService.setTenant(tenant);
@@ -40,9 +46,11 @@ export class ProductsController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Get()
-  async findAll(@Headers('tenant') tenantId: string) {
-    this.setTenant(tenantId);
+  async findAll(@Headers('authorization') token: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.productsService.listAll();
     return GetProductsDto.factoryPaginate(
       GetProductsDto,
@@ -63,12 +71,14 @@ export class ProductsController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Get('/:id')
   async findOne(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.productsService.find(id);
     return GetProductsDto.factory(GetProductsDto, data);
   }
@@ -83,14 +93,16 @@ export class ProductsController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Get('/:pageindex/:pagesize')
   async findWithFilter(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Body() filters: any,
     @Param('pageindex') pageindex: number,
     @Param('pagesize') pagesize: number,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.productsService.findWithFilter(
       filters,
       pageindex,
@@ -98,9 +110,9 @@ export class ProductsController {
     );
     return GetProductsDto.factoryPaginate(
       GetProductsDto,
-      data.data,
+      data.data.rows,
       Number(pageindex),
-      data.data.length,
+      data.data.rowCount,
       data.count,
     );
   }
@@ -115,9 +127,11 @@ export class ProductsController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Post()
-  async add(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async add(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.productsService.add(input);
     return GetProductsDto.factory(GetProductsDto, data);
   }
@@ -132,9 +146,11 @@ export class ProductsController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Put()
-  async edit(@Headers('tenant') tenantId: string, @Body() input: any) {
-    this.setTenant(tenantId);
+  async edit(@Headers('authorization') token: any, @Body() input: any) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.productsService.edit(input);
     return GetProductsDto.factory(GetProductsDto, data);
   }
@@ -149,12 +165,14 @@ export class ProductsController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
   @Delete('/:id')
   async remove(
-    @Headers('tenant') tenantId: string,
+    @Headers('authorization') token: any,
     @Param('id', new ParseUUIDPipe()) id: string,
   ) {
-    this.setTenant(tenantId);
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
     const data = await this.productsService.remove(id);
     return GetProductsDto.factory(GetProductsDto, data[0]);
   }

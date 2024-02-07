@@ -1,14 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { Repository } from 'typeorm';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Discount } from 'src/entities/discount.entity';
+import { Client } from 'pg';
+import { InjectConnection } from 'nest-postgres';
 
 @Injectable()
 export class DiscountsService {
   tenant: string;
   constructor(
-    @InjectRepository(Discount)
-    private readonly discountRepository: Repository<Discount>,
+    @InjectConnection('dbConnection')
+    private dbConnection: Client,
   ) {}
 
   setTenant(tenant: string) {
@@ -16,7 +15,7 @@ export class DiscountsService {
   }
 
   async listAll() {
-    return await this.discountRepository.query(
+    return await this.dbConnection.query(
       `select * from ${this.tenant}.discounts`,
     );
   }

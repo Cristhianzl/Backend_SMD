@@ -1,17 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Category } from 'src/entities/category.entity';
-import { Product } from 'src/entities/product.entity';
-import { Repository } from 'typeorm';
 import { v4 as uuid } from 'uuid';
-
+import { Client } from 'pg';
+import { InjectConnection } from 'nest-postgres';
 @Injectable()
 export class ProductsService {
   tenant: string;
 
   constructor(
-    @InjectRepository(Product)
-    private readonly productsRepository: Repository<Product>,
+    @InjectConnection('dbConnection')
+    private dbConnection: Client,
   ) {}
 
   setTenant(tenant: string) {
@@ -19,14 +16,14 @@ export class ProductsService {
   }
 
   async listAll() {
-    const data = await this.productsRepository.query(
+    const data = await this.dbConnection.query(
       `select * from ${this.tenant}.products order by created_at desc`,
     );
-    const countData = await this.productsRepository.query(
+    const countData = await this.dbConnection.query(
       `select count(*) from ${this.tenant}.products `,
     );
 
-    const count = Number(countData[0].count);
+    const count = Number(countData?.rows[0]?.count ?? 0);
 
     return {
       data,
@@ -35,7 +32,7 @@ export class ProductsService {
   }
 
   async find(id: string) {
-    return await this.productsRepository.query(
+    return await this.dbConnection.query(
       `select * from ${this.tenant}.products where id = '${id}'`,
     );
   }
@@ -55,18 +52,20 @@ export class ProductsService {
       Object.keys(filters).length ? filtersQuery : ''
     }`;
 
-    const more = await this.productsRepository.query(
+    const more = await this.dbConnection.query(
       `select category_id, product_id from ${this.tenant}.category_products`,
     );
 
-    const data = await this.productsRepository.query(query);
-    const countData = await this.productsRepository.query(queryCount);
+    const data = await this.dbConnection.query(query);
+    const countData = await this.dbConnection.query(queryCount);
 
-    data.forEach((element) => {
-      element.categories = more.filter((x) => x.product_id === element.id);
+    data?.rows?.forEach((element) => {
+      element.categories = more?.rows?.filter(
+        (x) => x.product_id === element.id,
+      );
     });
 
-    const count = Number(countData[0]?.count ?? 0);
+    const count = Number(countData?.rows[0]?.count ?? 0);
 
     return {
       data,
@@ -115,7 +114,7 @@ export class ProductsService {
     }
 
     try {
-      const data = await this.productsRepository.query(
+      const data = await this.dbConnection.query(
         `insert into ${
           this.tenant
         }.products (id, name, ${columns} price, on_sale, created_at) values ('${uuidValue}', '${
@@ -127,7 +126,7 @@ export class ProductsService {
 
       if (input?.categories?.length > 0) {
         input.categories.forEach(async (element) => {
-          await this.productsRepository.query(
+          await this.dbConnection.query(
             `insert into ${
               this.tenant
             }.category_products (id, product_id, category_id) values ('${uuid()}', '${uuidValue}', '${element}')`,
@@ -169,7 +168,7 @@ export class ProductsService {
     }
 
     try {
-      const data = await this.productsRepository.query(
+      const data = await this.dbConnection.query(
         `update ${this.tenant}.products set name = '${input.name}', ${values}
         price = ${input.price ?? 0}, on_sale = '${input.on_sale ?? false}',
         updated_at = NOW() - interval '3 hour'
@@ -177,12 +176,12 @@ export class ProductsService {
       );
 
       if (input?.categories?.length > 0) {
-        await this.productsRepository.query(
+        await this.dbConnection.query(
           `delete from ${this.tenant}.category_products where product_id = '${input.id}'`,
         );
 
         input.categories?.forEach(async (element) => {
-          await this.productsRepository.query(
+          await this.dbConnection.query(
             `insert into ${
               this.tenant
             }.category_products (id, product_id, category_id) values ('${uuid()}', '${
@@ -198,7 +197,7 @@ export class ProductsService {
   }
 
   async remove(id: string) {
-    const data = await this.productsRepository.query(
+    const data = await this.dbConnection.query(
       `delete from ${this.tenant}.products where id = '${id}' returning *`,
     );
 
