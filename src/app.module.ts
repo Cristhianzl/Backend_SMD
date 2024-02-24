@@ -12,13 +12,21 @@ import { HttpExceptionFilter } from './shared/http-exception.filter';
 import { APP_FILTER } from '@nestjs/core';
 import { PostgresModule } from 'nest-postgres';
 import { EmailModule } from './email/email.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: '.env',
+      isGlobal: true,
+    }),
     PostgresModule.forRoot(
       {
-        connectionString:
-          'postgresql://postgres:password@localhost/menudigital',
+        user: process.env.DB_USER,
+        password: process.env.DB_PASS,
+        host: process.env.DB_HOST,
+        port: parseInt(process.env.DB_PORT, 10),
+        database: process.env.DB_DATABASE,
       },
       'dbConnection',
     ),
