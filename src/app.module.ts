@@ -11,6 +11,7 @@ import { MenusModule } from './menu/menu.module';
 import { HttpExceptionFilter } from './shared/http-exception.filter';
 import { APP_FILTER } from '@nestjs/core';
 import { PostgresModule } from 'nest-postgres';
+import { EmailModule } from './email/email.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { PostgresModule } from 'nest-postgres';
     ProductsModule,
     StoresModule,
     MenusModule,
+    EmailModule,
   ],
   controllers: [],
   providers: [

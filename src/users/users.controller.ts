@@ -9,6 +9,8 @@ import {
   Post,
   Put,
   Delete,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -19,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { GetUsersDto } from './entities/users.entity';
 import { UsersService } from './users.service';
+import { AuthGuard } from 'src/guards/auth.guard';
 
 @ApiTags('users')
 @Controller('users')
@@ -28,6 +31,55 @@ export class UsersController {
 
   setTenant(tenant: string) {
     this.userService.setTenant(tenant);
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetUsersDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Get('/generate-key')
+  async generateKey(@Query('user') user?: string) {
+    const hashCode = await this.userService.generateKey(user);
+
+    const response = {
+      hashCode,
+      email: btoa(user),
+    };
+
+    return response;
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetUsersDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Get('/recovery-password')
+  async recoveryPassword(
+    @Query('hash') hash: string,
+    @Query('newPassword') newPassword: string,
+  ) {
+    const message = await this.userService.recoveryPassword(
+      hash,
+      atob(newPassword),
+    );
+
+    const response = {
+      message,
+    };
+
+    return response;
   }
 
   @ApiDefaultResponse({
@@ -133,9 +185,10 @@ export class UsersController {
     required: true,
   })
   @Put()
+  @UseGuards(AuthGuard)
   async edit(@Headers('authorization') token: any, @Body() input: any) {
     this.setTenant(token);
-    const data = await this.userService.edit(input);
+    const data = await this.userService.edit(input, token);
     return GetUsersDto.factory(GetUsersDto, data);
   }
 
