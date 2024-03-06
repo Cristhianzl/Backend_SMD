@@ -78,7 +78,6 @@ export class TenantsService {
       count,
     };
   }
-
   async add(input) {
     const data = await this.dbConnection.query(
       `insert into ${

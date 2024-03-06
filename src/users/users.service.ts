@@ -17,6 +17,7 @@ import {
 } from 'crypto';
 import { promisify } from 'util';
 import { EmailService } from 'src/email/email.service';
+import Stripe from 'stripe';
 
 @Injectable()
 export class UsersService {
@@ -33,6 +34,8 @@ export class UsersService {
     .digest('hex')
     .substring(0, 16);
 
+  stripe: any;
+
   constructor(
     @InjectConnection('dbConnection')
     private dbConnection: Client,
@@ -41,10 +44,15 @@ export class UsersService {
     private readonly emailService: EmailService,
   ) {
     this.setTenant('public');
+    this.setStripeKey();
   }
 
   setTenant(tenant: string) {
     this.tenant = 'public';
+  }
+
+  setStripeKey() {
+    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
   }
 
   async listAll() {
@@ -104,29 +112,54 @@ export class UsersService {
       `select * from ${this.tenant}.users where email = '${input.email}'`,
     );
 
-    if (user.length > 0) {
+    if (user.rows.length > 0) {
       throw new HttpException(
         'Usuário ou Email já cadastrado',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
 
-    if (email.length > 0) {
+    if (email.rows.length > 0) {
       throw new HttpException(
         'Usuário ou Email já cadastrado',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
-
     const tenantCreation = {
       name: input.username,
       tenant_name: input.company,
       tenant_img: null,
     };
 
+    let customerId: any;
+    try {
+      const customers = await this.stripe.customers.list({
+        email: input.email,
+      });
+
+      if (customers.data.length > 0) {
+        throw new HttpException(
+          'Email já cadastrado',
+          HttpStatus.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      if (customers.data.length === 0) {
+        const customer = await this.stripe.customers.create({
+          email: input.email,
+        });
+        customerId = customer.id;
+      }
+    } catch (e) {
+      throw new HttpException(
+        'Ocorreu um erro ao realizar seu cadastro, tente novamente.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     const newTenant = await this.tenantService.add(tenantCreation);
 
-    if (newTenant.length === 0) {
+    if (newTenant.rows.length === 0) {
       throw new HttpException(
         'Ocorreu um erro ao realizar seu cadastro, tente novamente.',
         HttpStatus.INTERNAL_SERVER_ERROR,
@@ -134,10 +167,10 @@ export class UsersService {
     }
 
     try {
-      await this.tenantService.runMigrations(newTenant[0].tenant_name);
+      await this.tenantService.runMigrations(newTenant.rows[0].tenant_name);
     } catch (e) {
       await this.dbConnection.query(
-        `delete from public.tenants where id = '${newTenant[0].id}'`,
+        `delete from public.tenants where id = '${newTenant.rows[0].id}'`,
       );
       throw new HttpException(
         'Ocorreu um erro ao realizar seu cadastro, tente novamente.',
@@ -149,19 +182,19 @@ export class UsersService {
     const hash = await bcrypt.hash(input.password, saltOrRounds);
 
     let data = await this.dbConnection.query(
-      `insert into public.users (id, username, password, is_admin, tenant_id, name, email, created_at) values ('${uuid()}', 
-      '${input.username}', '${hash}', 'false', '${newTenant[0].id}', '${
+      `insert into public.users (id, username, password, is_admin, tenant_id, name, email, created_at, sid) values ('${uuid()}',
+      '${input.username}', '${hash}', 'false', '${newTenant.rows[0].id}', '${
         input.username
       }', '${input.email}'
-      , NOW() - interval '3 hour') returning *`,
+      , NOW() - interval '3 hour', '${customerId}') returning *`,
     );
 
     const returnData = {
-      id: data[0].id,
-      username: data[0].username,
-      name: data[0].name,
-      email: data[0].email,
-      tenant: newTenant[0].tenant_name,
+      id: data.rows[0].id,
+      username: data.rows[0].username,
+      name: data.rows[0].name,
+      email: data.rows[0].email,
+      tenant: newTenant.rows[0].tenant_name,
     };
 
     return returnData;
@@ -259,11 +292,45 @@ export class UsersService {
 
   async remove(token: string) {
     const access = await this.jwtService.decode(token.split(' ')[1]);
-    const data = await this.dbConnection.query(
-      `delete from ${this.tenant}.users where id = '${access.id}' returning *`,
+
+    const user = await this.dbConnection.query(
+      `select * from ${this.tenant}.users where username = '${access.username}'`,
     );
 
-    return data;
+    if (user.rows.length === 0) {
+      throw new HttpException(
+        'Usuário inválido',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const tenantToDelete = await this.dbConnection.query(
+      `select * from public.tenants where tenant_name = '${access.tenantName}'`,
+    );
+
+    const deleteSchema = await this.dbConnection.query(
+      `drop schema ${access.tenantName} cascade`,
+    );
+
+    const deleteUser = await this.dbConnection.query(
+      `delete from ${this.tenant}.users where id = '${user.rows[0].id}' returning *`,
+    );
+
+    const customers = await this.stripe.customers.list({
+      email: user.rows[0].email,
+    });
+
+    const userStripe = await this.stripe.subscriptions.list({
+      customer: customers.data[0].id,
+    });
+
+    if (userStripe.data.length > 0) {
+      await this.stripe.subscriptions.cancel(userStripe.data[0].id);
+    }
+
+    await this.stripe.customers.del(customers.data[0].id);
+
+    return 'User Deletado com Sucesso!';
   }
 
   async findOne(username: string): Promise<any> {
@@ -346,5 +413,158 @@ export class UsersService {
     );
 
     return 'Senha alterada com sucesso';
+  }
+
+  async subscribe(token, key: string) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+
+    const user = await this.dbConnection.query(
+      `select * from ${this.tenant}.users where username = '${access.username}'`,
+    );
+
+    if (user.rows.length === 0) {
+      throw new HttpException(
+        'Usuário inválido',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const customers = await this.stripe.customers.list({
+      email: user.rows[0].email,
+    });
+
+    if (customers.data.length === 0) {
+      throw new HttpException(
+        'Usuário não encontrado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const subscriptionCheck = await this.stripe.subscriptions.list({
+      customer: customers.data[0].id,
+    });
+
+    const findActiveSubscription = subscriptionCheck.data.find(
+      (subscription) => subscription.status === 'active',
+    );
+
+    if (findActiveSubscription) {
+      throw new HttpException(
+        'Usuário já possui assinatura',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const attachPaymentMethod = await this.stripe.paymentMethods.attach(key, {
+      customer: customers.data[0].id,
+    });
+
+    const updatedCustomer = await this.stripe.customers.update(
+      customers.data[0].id,
+      {
+        invoice_settings: {
+          default_payment_method: key,
+        },
+      },
+    );
+
+    const subscription = await this.stripe.subscriptions.create({
+      customer: customers.data[0].id,
+      items: [{ price: 'price_1Or7hnBJOR4vvWGRb13MsdaX', quantity: 1 }],
+      expand: ['latest_invoice.payment_intent'],
+    });
+
+    const endSubscription = new Date(
+      subscription.current_period_end * 1000,
+    ).toISOString();
+
+    const isoDateString = endSubscription;
+    const dateTime = new Date(isoDateString);
+
+    // Formatting date according to PostgreSQL datetime format
+    const formattedDateTime = dateTime
+      .toISOString()
+      .slice(0, 19)
+      .replace('T', ' ');
+
+    const updateSubscription = await this.dbConnection.query(
+      `update ${this.tenant}.users set is_subscribed = true, subscription_date = '${formattedDateTime}' where id = '${user.rows[0].id}'`,
+    );
+
+    return 'Assinatura realizada com sucesso';
+  }
+
+  async subscriptionCheck(token) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+
+    const user = await this.dbConnection.query(
+      `select * from ${this.tenant}.users where username = '${access.username}'`,
+    );
+
+    const customers = await this.stripe.customers.list({
+      email: user.rows[0].email,
+    });
+
+    if (customers.data.length === 0) {
+      throw new HttpException(
+        'Usuário não encontrado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const paymentMethods = await this.stripe.paymentMethods.list({
+      customer: customers.data[0].id,
+      type: 'card',
+    });
+
+    const lastPaymentMethod =
+      paymentMethods.data[paymentMethods.data.length - 1];
+
+    const subscription = await this.stripe.subscriptions.list({
+      customer: customers.data[0].id,
+    });
+
+    const findActiveSubscription = subscription.data.find(
+      (subscription) => subscription.status === 'active',
+    );
+
+    const data = {
+      lastFour: lastPaymentMethod?.card?.last4 ?? null,
+      subscription: findActiveSubscription ? 'active' : 'inactive',
+      endSubscription: findActiveSubscription?.current_period_end
+        ? new Date(findActiveSubscription?.current_period_end * 1000)
+        : null,
+    };
+
+    return data;
+  }
+
+  async subscriptionCheckLogin(user) {
+    const customers = await this.stripe.customers.list({
+      email: user.email,
+    });
+
+    if (customers.data.length === 0) {
+      throw new HttpException(
+        'Usuário não encontrado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const subscription = await this.stripe.subscriptions.list({
+      customer: customers.data[0].id,
+    });
+
+    const findActiveSubscription = subscription.data.find(
+      (subscription) => subscription.status === 'active',
+    );
+
+    const canAccessTrial = moment().diff(user.created_at, 'days') < 11;
+
+    if (!findActiveSubscription && !canAccessTrial) {
+      const deactivateAllMenus = await this.dbConnection.query(
+        `update ${user.tenant_name}.menus set is_active = false`,
+      );
+    }
   }
 }

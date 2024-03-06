@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as moment from 'moment';
 
 @Injectable()
 export class AuthService {
@@ -18,6 +19,8 @@ export class AuthService {
       throw new UnauthorizedException();
     }
 
+    await this.usersService.subscriptionCheckLogin(currentUser);
+
     const isMatch = await bcrypt.compare(pass, currentUser?.password);
     if (!isMatch) {
       throw new UnauthorizedException();
@@ -29,6 +32,10 @@ export class AuthService {
       email: currentUser.email,
       username: currentUser.username,
       tenant: currentUser.tenant_name,
+      createdAt: moment(currentUser.created_at).format('YYYY-MM-DD'),
+      iotAt: currentUser?.subscription_date
+        ? moment(currentUser?.subscription_date).format('YYYY-MM-DD')
+        : null,
     };
 
     const payload = {

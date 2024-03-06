@@ -43,6 +43,49 @@ export class UsersController {
     description: 'Tenant',
     required: true,
   })
+  @UseGuards(AuthGuard)
+  @Get('/subscriptionCheck')
+  async subscriptionCheck(@Headers('authorization') token: any) {
+    this.setTenant(token);
+    const data = await this.userService.subscriptionCheck(token);
+    return {
+      data: data,
+    };
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetUsersDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @UseGuards(AuthGuard)
+  @Get('/subscribe/:key/')
+  async subscribe(
+    @Headers('authorization') token: any,
+    @Param('key') key: string,
+  ) {
+    this.setTenant(token);
+    const data = await this.userService.subscribe(token, atob(key));
+    return {
+      data: data,
+    };
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetUsersDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
   @Get('/generate-key')
   async generateKey(@Query('user') user?: string) {
     const hashCode = await this.userService.generateKey(user);
@@ -202,13 +245,12 @@ export class UsersController {
     description: 'Tenant',
     required: true,
   })
-  @Delete('/:id')
-  async remove(
-    @Headers('authorization') token: any,
-    @Param('id', new ParseUUIDPipe()) id: string,
-  ) {
+  @Delete()
+  async remove(@Headers('authorization') token: any) {
     this.setTenant(token);
-    const data = await this.userService.remove(id);
-    return GetUsersDto.factory(GetUsersDto, data[0]);
+    const data = await this.userService.remove(token);
+    return {
+      message: data,
+    };
   }
 }
