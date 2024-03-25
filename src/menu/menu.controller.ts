@@ -51,7 +51,7 @@ export class MenusController {
   })
   @Get('getActive')
   async getActive(@Headers('tenant') tenantId: string) {
-    const value = await this.cacheManager.get('menu-active');
+    const value = await this.cacheManager.get('menu-active-' + tenantId);
     if (value) {
       return value;
     }
@@ -59,8 +59,9 @@ export class MenusController {
     this.setTenant(tenantId);
     const menu = await this.menusService.getActive();
     if (menu) {
-      await this.cacheManager.set('menu-active', menu);
+      await this.cacheManager.set('menu-active-' + tenantId, menu);
     }
+    return menu;
   }
 
   @ApiDefaultResponse({

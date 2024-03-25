@@ -18,22 +18,11 @@ import {
 import { promisify } from 'util';
 import { EmailService } from 'src/email/email.service';
 import Stripe from 'stripe';
+import { decrypt, encrypt } from 'src/shared/helpers/encrypt-decrypt';
 
 @Injectable()
 export class UsersService {
   tenant: string;
-  passwordEncryption: string = 'hashkeymmd';
-  ivEncryption: string = 'smslt';
-  encryptMethod: string = 'aes-256-cbc';
-  key: string = createHash('sha512')
-    .update(this.passwordEncryption, 'utf-8')
-    .digest('hex')
-    .substring(0, 32);
-  iv = createHash('sha512')
-    .update(this.passwordEncryption, 'utf-8')
-    .digest('hex')
-    .substring(0, 16);
-
   stripe: any;
 
   constructor(
@@ -104,6 +93,10 @@ export class UsersService {
   }
 
   async add(input) {
+    const tenant = await this.dbConnection.query(
+      `select * from public.tenants where name = '${input.company}'`,
+    );
+
     const user = await this.dbConnection.query(
       `select * from ${this.tenant}.users where username = '${input.username}'`,
     );
@@ -112,16 +105,16 @@ export class UsersService {
       `select * from ${this.tenant}.users where email = '${input.email}'`,
     );
 
-    if (user.rows.length > 0) {
+    if (email.rows.length > 0 || user.rows.length > 0) {
       throw new HttpException(
         'Usuário ou Email já cadastrado',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
 
-    if (email.rows.length > 0) {
+    if (tenant.rows.length > 0) {
       throw new HttpException(
-        'Usuário ou Email já cadastrado',
+        'Nome já cadastrado, por favor, escolha um outro nome',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -204,6 +197,17 @@ export class UsersService {
   }
 
   async edit(input, token) {
+    const tenant = await this.dbConnection.query(
+      `select * from public.tenants where name = '${input.tenantName}'`,
+    );
+
+    if (tenant.rows.length > 0 && !tenant.rows[0].name !== input.tenantName) {
+      throw new HttpException(
+        'Nome já cadastrado, por favor, escolha um outro nome',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     let values: string = '';
     const access = await this.jwtService.decode(token.split(' ')[1]);
 
@@ -359,7 +363,7 @@ export class UsersService {
   }
 
   async generateKey(body: string, type: string) {
-    const encryptor = createCipheriv(this.encryptMethod, this.key, this.iv);
+    const encryptor = encrypt();
     const aesEncrypted =
       encryptor.update(body, 'utf-8', 'base64') + encryptor.final('base64');
     const encryptedText = Buffer.from(aesEncrypted).toString('base64');
@@ -379,14 +383,12 @@ export class UsersService {
   }
 
   async confirmEmail(hash: string) {
-    const hashDate = atob(hash.split('/')[0]); // Assuming hash is defined elsewhere
-    let encryptedText = hash.split('/')[1]; // Assuming hash is defined elsewhere
+    const hashDate = atob(hash.split('/')[0]);
+    let encryptedText = hash.split('/')[1];
     const currentDate = moment().add(-3, 'hours').format();
 
-    // Calculate the difference in minutes
     const differenceInMinutes = moment(currentDate).diff(hashDate, 'minutes');
 
-    //Check if the difference is less than or equal to 3 minutes
     if (differenceInMinutes >= 3) {
       throw new HttpException(
         'Chave inválida',
@@ -394,14 +396,7 @@ export class UsersService {
       );
     }
 
-    const buff = Buffer.from(encryptedText, 'base64');
-    encryptedText = buff.toString('utf-8');
-    const decryptor = createDecipheriv(this.encryptMethod, this.key, this.iv);
-    const decryptedText =
-      decryptor.update(encryptedText, 'base64', 'utf-8') +
-      decryptor.final('utf-8');
-
-    const emailToUpdate = decryptedText;
+    const emailToUpdate = decrypt(encryptedText);
 
     const email = await this.dbConnection.query(
       `select * from ${this.tenant}.users where email = '${emailToUpdate}'`,
@@ -437,14 +432,8 @@ export class UsersService {
       );
     }
 
-    const buff = Buffer.from(encryptedText, 'base64');
-    encryptedText = buff.toString('utf-8');
-    const decryptor = createDecipheriv(this.encryptMethod, this.key, this.iv);
-    const decryptedText =
-      decryptor.update(encryptedText, 'base64', 'utf-8') +
-      decryptor.final('utf-8');
+    const emailToUpdate = atob(decrypt(encryptedText));
 
-    const emailToUpdate = atob(decryptedText);
     const user = await this.dbConnection.query(
       `select * from ${this.tenant}.users where email = '${emailToUpdate}'`,
     );

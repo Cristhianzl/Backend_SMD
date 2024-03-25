@@ -58,6 +58,7 @@ export const buildFinalMenu = (data: any) => {
   const menu = {
     name: groupedMenu.name,
     categories: groupedMenu.categories,
+    tenant: '',
   };
 
   return menu;

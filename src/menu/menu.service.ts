@@ -158,8 +158,19 @@ export class MenusService {
   }
 
   async getActive() {
+    const tenantName = await this.dbConnection.query(
+      `select name from public.tenants where tenant_name = '${this.tenant}'`,
+    );
+
+    if (tenantName.rows.length === 0) {
+      throw new HttpException(
+        'Empresa não encontrada',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     const hasActive = await this.dbConnection.query(
-      `select from ${this.tenant}.menus where is_active = true`,
+      `select * from ${this.tenant}.menus where is_active = true`,
     );
 
     if (hasActive.rowCount > 0) {
@@ -199,7 +210,8 @@ export class MenusService {
         throw new HttpException('Nenhum menu ativo.', HttpStatus.NOT_FOUND);
       }
 
-      const menuFinal = buildFinalMenu(data.rows);
+      let menuFinal = buildFinalMenu(data.rows);
+      menuFinal = { ...menuFinal, tenant: tenantName.rows[0].name };
       return menuFinal;
     } else {
       throw new HttpException('Nenhum menu ativo.', HttpStatus.NOT_FOUND);

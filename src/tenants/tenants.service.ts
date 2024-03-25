@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Tenant } from 'src/entities/tenant.entity';
 import { createTenantName } from 'src/shared/create-tenant-name';
@@ -93,6 +93,17 @@ export class TenantsService {
   }
 
   async edit(input) {
+    const tenant = await this.dbConnection.query(
+      `select * from public.tenants where name = '${input.name}'`,
+    );
+
+    if (tenant.rows.length > 0) {
+      throw new HttpException(
+        'Nome já cadastrado, por favor, escolha um outro nome.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
     let values: string = '';
 
     if (input.name) {
