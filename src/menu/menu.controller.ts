@@ -10,6 +10,7 @@ import {
   Put,
   Delete,
   UseGuards,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -22,6 +23,8 @@ import { GetMenuDto } from './entities/menu.entity';
 import { MenusService } from './menu.service';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { JwtService } from '@nestjs/jwt';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @ApiTags('menus')
 @Controller('menus')
@@ -30,6 +33,7 @@ export class MenusController {
   constructor(
     private readonly menusService: MenusService,
     private jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   setTenant(tenant: string) {
@@ -47,8 +51,16 @@ export class MenusController {
   })
   @Get('getActive')
   async getActive(@Headers('tenant') tenantId: string) {
+    const value = await this.cacheManager.get('menu-active');
+    if (value) {
+      return value;
+    }
+
     this.setTenant(tenantId);
-    return await this.menusService.getActive();
+    const menu = await this.menusService.getActive();
+    if (menu) {
+      await this.cacheManager.set('menu-active', menu);
+    }
   }
 
   @ApiDefaultResponse({

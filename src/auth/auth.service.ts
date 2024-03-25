@@ -1,4 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -17,6 +22,10 @@ export class AuthService {
 
     if (!currentUser) {
       throw new UnauthorizedException();
+    }
+
+    if (currentUser?.is_admin === false) {
+      throw new HttpException('Not Confirmed', HttpStatus.BAD_REQUEST);
     }
 
     await this.usersService.subscriptionCheckLogin(currentUser);

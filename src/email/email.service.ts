@@ -19,7 +19,10 @@ export class EmailService {
     await this.sendGridClient.send(mail);
   }
 
-  async sendEmailWithTemplate(recipient: string, body: string): Promise<void> {
+  async sendEmailWithTemplatePassword(
+    recipient: string,
+    body: string,
+  ): Promise<void> {
     const mail: MailDataRequired = {
       to: recipient,
       cc: 'contatomeumenud@gmail.com', //Assuming you want to send a copy to this email
@@ -40,4 +43,30 @@ export class EmailService {
       );
     }
   }
+
+  async sendEmailWithTemplateNewUser(
+    recipient: string,
+    body: string,
+  ): Promise<void> {
+    const mail: MailDataRequired = {
+      to: recipient,
+      cc: 'contatomeumenud@gmail.com', //Assuming you want to send a copy to this email
+      from: 'contatomeumenud@gmail.com', //Approved sender ID in Sendgrid
+      subject: 'Seja bem vindo!',
+      templateId: 'd-7fb3e159dc304f81985390bdd5510134', //Retrieve from config service or environment variable
+      dynamicTemplateData: {
+        link: `${process.env.HOST}confirmation/${body}`,
+        subject: 'Seja bem vindo!',
+      }, //The data to be used in the template
+    };
+    try {
+      await this.sendGridClient.send(mail);
+    } catch (e) {
+      throw new HttpException(
+        'Ocorreu um erro ao enviar email.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
 }
+// Path: src/email/email.module.ts

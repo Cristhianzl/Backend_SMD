@@ -125,6 +125,9 @@ export class UsersService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+
+    await this.generateKey(input.email, 'newuser');
+
     const tenantCreation = {
       name: input.username,
       tenant_name: input.company,
@@ -355,19 +358,67 @@ export class UsersService {
     );
   }
 
-  async generateKey(user: string) {
+  async generateKey(body: string, type: string) {
     const encryptor = createCipheriv(this.encryptMethod, this.key, this.iv);
     const aesEncrypted =
-      encryptor.update(user, 'utf-8', 'base64') + encryptor.final('base64');
+      encryptor.update(body, 'utf-8', 'base64') + encryptor.final('base64');
     const encryptedText = Buffer.from(aesEncrypted).toString('base64');
 
     const formattedDateTime = moment().add(-3, 'hours').format();
 
     const hash = btoa(formattedDateTime) + '/' + encryptedText;
 
-    this.emailService.sendEmailWithTemplate(atob(user), hash);
+    if (type === 'newuser') {
+      this.emailService.sendEmailWithTemplateNewUser(body, hash);
+    }
+    if (type === 'password') {
+      this.emailService.sendEmailWithTemplatePassword(atob(body), hash);
+    }
 
     return hash;
+  }
+
+  async confirmEmail(hash: string) {
+    const hashDate = atob(hash.split('/')[0]); // Assuming hash is defined elsewhere
+    let encryptedText = hash.split('/')[1]; // Assuming hash is defined elsewhere
+    const currentDate = moment().add(-3, 'hours').format();
+
+    // Calculate the difference in minutes
+    const differenceInMinutes = moment(currentDate).diff(hashDate, 'minutes');
+
+    //Check if the difference is less than or equal to 3 minutes
+    if (differenceInMinutes >= 3) {
+      throw new HttpException(
+        'Chave inválida',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const buff = Buffer.from(encryptedText, 'base64');
+    encryptedText = buff.toString('utf-8');
+    const decryptor = createDecipheriv(this.encryptMethod, this.key, this.iv);
+    const decryptedText =
+      decryptor.update(encryptedText, 'base64', 'utf-8') +
+      decryptor.final('utf-8');
+
+    const emailToUpdate = decryptedText;
+
+    const email = await this.dbConnection.query(
+      `select * from ${this.tenant}.users where email = '${emailToUpdate}'`,
+    );
+
+    if (email.rows.length === 0) {
+      throw new HttpException(
+        'Usuário não encontrado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    const data = await this.dbConnection.query(
+      `update ${this.tenant}.users set is_admin = true where email = '${email.rows[0].email}'`,
+    );
+
+    return 'Email confirmado com sucesso';
   }
 
   async recoveryPassword(hash: string, newPassword: string) {

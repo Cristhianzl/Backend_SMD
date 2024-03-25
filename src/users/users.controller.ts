@@ -88,7 +88,7 @@ export class UsersController {
   })
   @Get('/generate-key')
   async generateKey(@Query('user') user?: string) {
-    const hashCode = await this.userService.generateKey(user);
+    const hashCode = await this.userService.generateKey(user, 'password');
 
     const response = {
       hashCode,
@@ -117,6 +117,27 @@ export class UsersController {
       hash,
       atob(newPassword),
     );
+
+    const response = {
+      message,
+    };
+
+    return response;
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetUsersDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Get('/confirmation-email')
+  async confirmationEmail(@Query('hash') hash: string) {
+    const message = await this.userService.confirmEmail(hash);
 
     const response = {
       message,
