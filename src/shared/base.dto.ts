@@ -1,13 +1,7 @@
-import { ApiHideProperty } from '@nestjs/swagger';
 import { ClassConstructor, plainToClass } from 'class-transformer';
 
 export class BaseDto {
-  public static factory<T, R>(
-    EntityDto: ClassConstructor<T>,
-    data: R,
-    code?,
-    message?,
-  ) {
+  public static factory<T, R>(EntityDto: ClassConstructor<T>, data: R) {
     if ((data as any)?.rows) {
       data = (data as any)?.rows;
     }

@@ -1,13 +1,6 @@
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-  scrypt,
-} from 'crypto';
+import { createCipheriv, createDecipheriv, createHash } from 'crypto';
 const passwordEncryption: string = 'hashkeymmd';
 
-const ivEncryption: string = 'smslt';
 const encryptMethod: string = 'aes-256-cbc';
 const key: string = createHash('sha512')
   .update(passwordEncryption, 'utf-8')

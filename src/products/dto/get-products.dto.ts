@@ -1,8 +1,7 @@
 import { BaseDto } from 'src/shared/base.dto';
 import { Categories } from 'src/categories/dto/get-categories.dto';
 import { Category } from 'src/entities/category.entity';
-import { Discount } from 'src/entities/discount.entity';
-import { Store } from 'src/entities/store.entity';
+
 import {
   PrimaryGeneratedColumn,
   Column,

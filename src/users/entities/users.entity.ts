@@ -3,9 +3,7 @@ import {
   IsNotEmpty,
   IsNumber,
   IsOptional,
-  IsString,
   IsUUID,
-  Length,
 } from 'class-validator';
 import { Expose } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';

@@ -15,7 +15,6 @@ import {
   ApiDefaultResponse,
   ApiExtraModels,
   ApiHeader,
-  ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { GetProductsDto } from './dto/get-products.dto';

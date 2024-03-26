@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Tenant } from 'src/entities/tenant.entity';
 import { createTenantName } from 'src/shared/create-tenant-name';
 import { v4 as uuid } from 'uuid';
 import { Client } from 'pg';
@@ -18,7 +17,7 @@ export class TenantsService {
   }
 
   setTenant(tenant: string) {
-    this.tenant = 'public';
+    this.tenant = 'public' ?? tenant;
   }
 
   async listAll() {

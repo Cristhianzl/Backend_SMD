@@ -15,7 +15,6 @@ import {
   ApiDefaultResponse,
   ApiExtraModels,
   ApiHeader,
-  ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { GetCategoriesDto } from './entities/categories.entity';

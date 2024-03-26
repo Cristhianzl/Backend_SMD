@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
-import { TenantsService } from './tenants/tenants.service';
 import { TenantsModule } from './tenants/tenants.module';
 import { CategoriesModule } from './categories/categories.module';
 import { DiscountsModule } from './discounts/discounts.module';

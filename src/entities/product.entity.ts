@@ -6,13 +6,10 @@ import {
   JoinColumn,
   CreateDateColumn,
   UpdateDateColumn,
-  DeleteDateColumn,
-  BeforeInsert,
 } from 'typeorm';
 import { Category } from './category.entity';
 import { Categories } from 'src/categories/dto/get-categories.dto';
 import { Discount } from './discount.entity';
-import { Store } from './store.entity';
 
 @Entity('product')
 export class Product {

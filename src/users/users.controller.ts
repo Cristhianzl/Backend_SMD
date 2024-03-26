@@ -16,7 +16,6 @@ import {
   ApiDefaultResponse,
   ApiExtraModels,
   ApiHeader,
-  ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { GetUsersDto } from './entities/users.entity';

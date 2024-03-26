@@ -14,7 +14,6 @@ import {
   ApiDefaultResponse,
   ApiExtraModels,
   ApiHeader,
-  ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { StoresService } from './stores.service';

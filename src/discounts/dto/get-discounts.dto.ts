@@ -1,5 +1,5 @@
 import { IsNumber, IsString, Length } from 'class-validator';
-import { Expose, Transform, Type } from 'class-transformer';
+import { Expose, Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 import { BaseDto } from 'src/shared/base.dto';
 

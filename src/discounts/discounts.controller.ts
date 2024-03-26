@@ -9,7 +9,6 @@ import {
   ApiDefaultResponse,
   ApiExtraModels,
   ApiHeader,
-  ApiOperation,
   ApiTags,
 } from '@nestjs/swagger';
 import { DiscountsService } from './discounts.service';

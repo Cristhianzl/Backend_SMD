@@ -1,4 +1,4 @@
-import { IsNumber, IsUUID } from 'class-validator';
+import { IsNumber } from 'class-validator';
 import {
   Entity,
   PrimaryGeneratedColumn,

@@ -1,21 +1,11 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
-import { User } from 'src/entities/user.entity';
 import { v4 as uuid } from 'uuid';
 import * as bcrypt from 'bcrypt';
-import { Tenant } from 'src/entities/tenant.entity';
 import { TenantsService } from 'src/tenants/tenants.service';
 import { JwtService } from '@nestjs/jwt';
 import { Client } from 'pg';
 import { InjectConnection } from 'nest-postgres';
 import * as moment from 'moment';
-import {
-  createCipheriv,
-  createDecipheriv,
-  createHash,
-  randomBytes,
-  scrypt,
-} from 'crypto';
-import { promisify } from 'util';
 import { EmailService } from 'src/email/email.service';
 import Stripe from 'stripe';
 import { decrypt, encrypt } from 'src/shared/helpers/encrypt-decrypt';
@@ -37,7 +27,7 @@ export class UsersService {
   }
 
   setTenant(tenant: string) {
-    this.tenant = 'public';
+    this.tenant = 'public' ?? tenant;
   }
 
   setStripeKey() {
@@ -177,7 +167,7 @@ export class UsersService {
     const saltOrRounds = 10;
     const hash = await bcrypt.hash(input.password, saltOrRounds);
 
-    let data = await this.dbConnection.query(
+    const data = await this.dbConnection.query(
       `insert into public.users (id, username, password, is_admin, tenant_id, name, email, created_at, sid) values ('${uuid()}',
       '${input.username}', '${hash}', 'false', '${newTenant.rows[0].id}', '${
         input.username
@@ -311,15 +301,13 @@ export class UsersService {
       );
     }
 
-    const tenantToDelete = await this.dbConnection.query(
+    await this.dbConnection.query(
       `select * from public.tenants where tenant_name = '${access.tenantName}'`,
     );
 
-    const deleteSchema = await this.dbConnection.query(
-      `drop schema ${access.tenantName} cascade`,
-    );
+    await this.dbConnection.query(`drop schema ${access.tenantName} cascade`);
 
-    const deleteUser = await this.dbConnection.query(
+    await this.dbConnection.query(
       `delete from ${this.tenant}.users where id = '${user.rows[0].id}' returning *`,
     );
 
@@ -384,7 +372,7 @@ export class UsersService {
 
   async confirmEmail(hash: string) {
     const hashDate = atob(hash.split('/')[0]);
-    let encryptedText = hash.split('/')[1];
+    const encryptedText = hash.split('/')[1];
     const currentDate = moment().add(-3, 'hours').format();
 
     const differenceInMinutes = moment(currentDate).diff(hashDate, 'minutes');
@@ -409,7 +397,7 @@ export class UsersService {
       );
     }
 
-    const data = await this.dbConnection.query(
+    await this.dbConnection.query(
       `update ${this.tenant}.users set is_admin = true where email = '${email.rows[0].email}'`,
     );
 
@@ -418,7 +406,7 @@ export class UsersService {
 
   async recoveryPassword(hash: string, newPassword: string) {
     const hashDate = atob(hash.split('/')[0]); // Assuming hash is defined elsewhere
-    let encryptedText = hash.split('/')[1]; // Assuming hash is defined elsewhere
+    const encryptedText = hash.split('/')[1]; // Assuming hash is defined elsewhere
     const currentDate = moment().add(-3, 'hours').format();
 
     // Calculate the difference in minutes
@@ -448,7 +436,7 @@ export class UsersService {
     const saltOrRounds = 10;
     const hashPassword = await bcrypt.hash(newPassword, saltOrRounds);
 
-    const data = await this.dbConnection.query(
+    await this.dbConnection.query(
       `update ${this.tenant}.users set password = '${hashPassword}' where email = '${emailToUpdate}'`,
     );
 
@@ -495,18 +483,15 @@ export class UsersService {
       );
     }
 
-    const attachPaymentMethod = await this.stripe.paymentMethods.attach(key, {
+    await this.stripe.paymentMethods.attach(key, {
       customer: customers.data[0].id,
     });
 
-    const updatedCustomer = await this.stripe.customers.update(
-      customers.data[0].id,
-      {
-        invoice_settings: {
-          default_payment_method: key,
-        },
+    await this.stripe.customers.update(customers.data[0].id, {
+      invoice_settings: {
+        default_payment_method: key,
       },
-    );
+    });
 
     const subscription = await this.stripe.subscriptions.create({
       customer: customers.data[0].id,
@@ -527,7 +512,7 @@ export class UsersService {
       .slice(0, 19)
       .replace('T', ' ');
 
-    const updateSubscription = await this.dbConnection.query(
+    await this.dbConnection.query(
       `update ${this.tenant}.users set is_subscribed = true, subscription_date = '${formattedDateTime}' where id = '${user.rows[0].id}'`,
     );
 
@@ -602,7 +587,7 @@ export class UsersService {
     const canAccessTrial = moment().diff(user.created_at, 'days') < 11;
 
     if (!findActiveSubscription && !canAccessTrial) {
-      const deactivateAllMenus = await this.dbConnection.query(
+      await this.dbConnection.query(
         `update ${user.tenant_name}.menus set is_active = false`,
       );
     }
