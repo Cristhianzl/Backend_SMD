@@ -155,15 +155,15 @@ export class ProductsService {
       values = values + `description = '${input.description}',`;
     }
 
-    if (input.is_vegan) {
+    if (input.is_vegan != null) {
       values = values + `is_vegan = '${input.is_vegan}',`;
     }
 
-    if (input.is_vegetarian) {
+    if (input.is_vegetarian != null) {
       values = values + `is_vegetarian = '${input.is_vegetarian}',`;
     }
 
-    if (input.is_gluten_free) {
+    if (input.is_gluten_free != null) {
       values = values + `is_gluten_free = '${input.is_gluten_free}',`;
     }
 
