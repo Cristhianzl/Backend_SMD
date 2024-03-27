@@ -105,7 +105,7 @@ export class MenusService {
   async edit(input) {
     let values: string = '';
 
-    if (input.is_active) {
+    if (input.is_active != null) {
       values = values + `is_active = '${input.is_active}',`;
     }
 

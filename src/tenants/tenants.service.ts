@@ -105,11 +105,11 @@ export class TenantsService {
 
     let values: string = '';
 
-    if (input.name) {
+    if (input.name != null) {
       values = values + `name = '${input.name}',`;
     }
 
-    if (input.tenant_img) {
+    if (input.tenant_img != null) {
       values = values + `tenant_img = '${input.tenant_img}',`;
     }
 

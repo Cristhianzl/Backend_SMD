@@ -78,7 +78,7 @@ export class ProductsService {
     let columns: string = '';
     const uuidValue = uuid();
 
-    if (input.category_id) {
+    if (input.category_id != null) {
       values = values + `'${input.category_id}',`;
       columns = columns + 'category_id,';
     }
@@ -89,26 +89,26 @@ export class ProductsService {
       columns = columns + 'discount_type,';
       columns = columns + 'discount_value,';
     }
-    if (input.url_img) {
+    if (input.url_img != null) {
       values = values + `'${input.url_img}',`;
       columns = columns + 'url_img,';
     }
-    if (input.description) {
+    if (input.description != null) {
       values = values + `'${input.description}',`;
       columns = columns + 'description,';
     }
 
-    if (input.is_vegan) {
+    if (input.is_vegan != null) {
       values = values + `'${input.is_vegan}',`;
       columns = columns + 'is_vegan,';
     }
 
-    if (input.is_vegetarian) {
+    if (input.is_vegetarian != null) {
       values = values + `'${input.is_vegetarian}',`;
       columns = columns + 'is_vegetarian,';
     }
 
-    if (input.is_gluten_free) {
+    if (input.is_gluten_free != null) {
       values = values + `'${input.is_gluten_free}',`;
       columns = columns + 'is_gluten_free,';
     }
@@ -147,11 +147,11 @@ export class ProductsService {
       values = values + `discount_type = '${input.discount_type}',`;
     }
 
-    if (input.url_img) {
+    if (input.url_img != null) {
       values = values + `url_img = '${input.url_img}',`;
     }
 
-    if (input.description) {
+    if (input.description != null) {
       values = values + `description = '${input.description}',`;
     }
 
