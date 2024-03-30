@@ -142,7 +142,7 @@ export class ProductsService {
   async edit(input) {
     let values: string = '';
 
-    if (input.discount_value && input.discount_type) {
+    if (input.discount_value != null && input.discount_type != null) {
       values = values + `discount_value = '${input.discount_value}',`;
       values = values + `discount_type = '${input.discount_type}',`;
     }

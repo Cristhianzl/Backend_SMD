@@ -12,6 +12,7 @@ import { APP_FILTER } from '@nestjs/core';
 import { PostgresModule } from 'nest-postgres';
 import { EmailModule } from './email/email.module';
 import { ConfigModule } from '@nestjs/config';
+import { FileUploaderModule } from './file-uploader/file-uploader.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { ConfigModule } from '@nestjs/config';
     StoresModule,
     MenusModule,
     EmailModule,
+    FileUploaderModule,
   ],
   controllers: [],
   providers: [
