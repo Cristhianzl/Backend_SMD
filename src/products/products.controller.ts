@@ -10,6 +10,8 @@ import {
   Put,
   Delete,
   UseGuards,
+  Inject,
+  HttpException,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -21,6 +23,9 @@ import { GetProductsDto } from './dto/get-products.dto';
 import { ProductsService } from './products.service';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { JwtService } from '@nestjs/jwt';
+import { Cache } from 'cache-manager';
+import { AuthService } from 'src/auth/auth.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @ApiTags('products')
 @Controller('products')
@@ -29,6 +34,8 @@ export class ProductsController {
   constructor(
     private readonly productsService: ProductsService,
     private jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private authService: AuthService,
   ) {}
 
   setTenant(tenant: string) {
@@ -102,6 +109,26 @@ export class ProductsController {
   ) {
     const access = await this.jwtService.decode(token.split(' ')[1]);
     this.setTenant(access.tenantName);
+
+    const userCacheCheck = await this.cacheManager.get(
+      'items-ok-' + access.username,
+    );
+
+    if (!userCacheCheck) {
+      const checkUser = await this.authService.invalidateHackerToken(
+        access.username,
+      );
+
+      if (checkUser === true) {
+        await this.cacheManager.set(
+          'items-ok-' + access.username,
+          'items-ok-' + access.username,
+        );
+      } else {
+        throw new HttpException('User não autorizado', HttpStatus.FORBIDDEN);
+      }
+    }
+
     const data = await this.productsService.findWithFilter(
       filters,
       pageindex,

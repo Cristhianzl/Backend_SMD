@@ -115,4 +115,36 @@ export class AuthService {
       }),
     };
   }
+
+  async invalidateHackerToken(username) {
+    const user = await this.usersService.findOne(username);
+    const currentUser = user?.rows[0];
+    if (currentUser.is_admin === false) {
+      return false;
+    }
+    if (
+      moment().diff(currentUser?.created_at, 'days') > 11 &&
+      currentUser.is_subscribed === true &&
+      moment() > moment(currentUser?.subscription_date).add(2, 'days')
+    ) {
+      await this.usersService.unsubscribeOnDb(username);
+      return false;
+    }
+
+    if (
+      moment().diff(currentUser?.created_at, 'days') > 11 &&
+      moment() > moment(currentUser?.subscription_date).add(2, 'days')
+    ) {
+      return false;
+    }
+
+    if (
+      moment().diff(currentUser?.created_at, 'days') > 11 &&
+      currentUser?.subscription_date === null
+    ) {
+      return false;
+    }
+
+    return true;
+  }
 }

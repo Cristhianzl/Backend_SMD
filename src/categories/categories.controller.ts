@@ -10,6 +10,8 @@ import {
   Put,
   Delete,
   UseGuards,
+  HttpException,
+  Inject,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -21,6 +23,9 @@ import { GetCategoriesDto } from './entities/categories.entity';
 import { CategoriesService } from './categories.service';
 import { AuthGuard } from 'src/guards/auth.guard';
 import { JwtService } from '@nestjs/jwt';
+import { AuthService } from 'src/auth/auth.service';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 
 @ApiTags('categories')
 @Controller('categories')
@@ -29,6 +34,8 @@ export class CategoriesController {
   constructor(
     private readonly categoriesService: CategoriesService,
     private jwtService: JwtService,
+    private authService: AuthService,
+    @Inject(CACHE_MANAGER) private cacheManager: Cache,
   ) {}
 
   setTenant(tenant: string) {
@@ -99,6 +106,26 @@ export class CategoriesController {
   ) {
     const access = await this.jwtService.decode(token.split(' ')[1]);
     this.setTenant(access.tenantName);
+
+    const userCacheCheck = await this.cacheManager.get(
+      'categories-ok-' + access.username,
+    );
+
+    if (!userCacheCheck) {
+      const checkUser = await this.authService.invalidateHackerToken(
+        access.username,
+      );
+
+      if (checkUser === true) {
+        await this.cacheManager.set(
+          'categories-ok-' + access.username,
+          'categories-ok-' + access.username,
+        );
+      } else {
+        throw new HttpException('User não autorizado', HttpStatus.FORBIDDEN);
+      }
+    }
+
     const data = await this.categoriesService.findWithFilter(
       filters,
       pageindex,

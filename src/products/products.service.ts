@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { Client } from 'pg';
 import { InjectConnection } from 'nest-postgres';
@@ -197,6 +197,24 @@ export class ProductsService {
   }
 
   async remove(id: string) {
+    const itemsOnActiveMenu = await this.dbConnection.query(
+      `select * from ${this.tenant}.menus m 
+      inner join ${this.tenant}.menu_categories mc on m.id = mc.menu_id 
+      inner join ${this.tenant}.category_products cp on cp.category_id = mc.category_id 
+      where cp.product_id = '${id}' and m.is_active = true`,
+    );
+
+    if (itemsOnActiveMenu?.rows?.length > 0) {
+      throw new HttpException(
+        'Produto cadastrado em um menu ativo.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    await this.dbConnection.query(
+      `delete from ${this.tenant}.category_products where product_id = '${id}'`,
+    );
+
     const data = await this.dbConnection.query(
       `delete from ${this.tenant}.products where id = '${id}' returning *`,
     );

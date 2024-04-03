@@ -592,4 +592,10 @@ export class UsersService {
       );
     }
   }
+
+  async unsubscribeOnDb(username) {
+    await this.dbConnection.query(
+      `update ${this.tenant}.users set is_subscribed = false where username = '${username}'`,
+    );
+  }
 }

@@ -1,7 +1,8 @@
-import { Injectable } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { Client } from 'pg';
 import { InjectConnection } from 'nest-postgres';
+import { AuthService } from 'src/auth/auth.service';
 
 @Injectable()
 export class CategoriesService {
@@ -136,6 +137,31 @@ export class CategoriesService {
   }
 
   async remove(id: string) {
+    const categoriesOnActiveMenu = await this.dbConnection.query(
+      `select * from ${this.tenant}.menus m 
+      inner join ${this.tenant}.menu_categories mc on m.id = mc.menu_id 
+      inner join ${this.tenant}.category_products cp on cp.category_id = mc.category_id 
+      where mc.category_id = '${id}' and m.is_active = true`,
+    );
+
+    if (categoriesOnActiveMenu?.rows?.length > 0) {
+      throw new HttpException(
+        'Produto cadastrado em um menu ativo.',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    await this.dbConnection.query(
+      `delete from ${this.tenant}.category_products where category_id = '${id}'
+      `,
+    );
+
+    await this.dbConnection.query(
+      `
+        delete from ${this.tenant}.menu_categories where category_id = '${id}'
+      `,
+    );
+
     const data = await this.dbConnection.query(
       `delete from ${this.tenant}.categories where id = '${id}' returning *`,
     );

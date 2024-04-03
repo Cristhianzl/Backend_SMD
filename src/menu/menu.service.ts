@@ -79,7 +79,6 @@ export class MenusService {
   }
 
   async add(input) {
-    debugger;
     const uuidValue = uuid();
 
     try {

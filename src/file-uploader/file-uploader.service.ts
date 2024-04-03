@@ -59,8 +59,6 @@ export class FileUploaderService {
         }
       }
       return s3Response;
-    } catch (e) {
-      console.log(e);
-    }
+    } catch (e) {}
   }
 }

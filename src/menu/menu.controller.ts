@@ -11,6 +11,7 @@ import {
   Delete,
   UseGuards,
   Inject,
+  HttpException,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -24,6 +25,7 @@ import { AuthGuard } from 'src/guards/auth.guard';
 import { JwtService } from '@nestjs/jwt';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
+import { AuthService } from 'src/auth/auth.service';
 
 @ApiTags('menus')
 @Controller('menus')
@@ -33,6 +35,7 @@ export class MenusController {
     private readonly menusService: MenusService,
     private jwtService: JwtService,
     @Inject(CACHE_MANAGER) private cacheManager: Cache,
+    private authService: AuthService,
   ) {}
 
   setTenant(tenant: string) {
@@ -148,6 +151,26 @@ export class MenusController {
   ) {
     const access = await this.jwtService.decode(token.split(' ')[1]);
     this.setTenant(access.tenantName);
+
+    const userCacheCheck = await this.cacheManager.get(
+      'menu-ok-' + access.username,
+    );
+
+    if (!userCacheCheck) {
+      const checkUser = await this.authService.invalidateHackerToken(
+        access.username,
+      );
+
+      if (checkUser === true) {
+        await this.cacheManager.set(
+          'menu-ok-' + access.username,
+          'menu-ok-' + access.username,
+        );
+      } else {
+        throw new HttpException('User não autorizado', HttpStatus.FORBIDDEN);
+      }
+    }
+
     const data = await this.menusService.findWithFilter(
       filters,
       pageindex,
