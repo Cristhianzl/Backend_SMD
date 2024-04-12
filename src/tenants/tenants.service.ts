@@ -143,120 +143,93 @@ CREATE SCHEMA IF NOT EXISTS ${schemaName};
 
 CREATE TABLE IF NOT EXISTS ${schemaName}.categories
 (
-    id uuid NOT NULL,
-    name character varying COLLATE pg_catalog."default" NOT NULL,
-    url_img character varying COLLATE pg_catalog."default",
-    created_at timestamp without time zone NOT NULL,
-    alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    CONSTRAINT categories_pkey PRIMARY KEY (id)
+  id uuid NOT NULL,
+  name character varying COLLATE pg_catalog."default" NOT NULL,
+  url_img character varying COLLATE pg_catalog."default",
+  created_at timestamp without time zone NOT NULL,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+  CONSTRAINT categories_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS ${schemaName}.category_products
 (
-    id uuid,
-    alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    product_id uuid,
-    category_id uuid,
-    order_view integer
+  id uuid,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+  product_id uuid,
+  category_id uuid,
+  order_view integer
 );
 
 CREATE TABLE IF NOT EXISTS ${schemaName}.menu_categories
 (
-    id uuid,
-    alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    menu_id uuid,
-    category_id uuid,
-    order_view integer
+  id uuid,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+  menu_id uuid,
+  category_id uuid,
+  order_view integer
 );
 
 CREATE TABLE IF NOT EXISTS ${schemaName}.menus
 (
-    id uuid NOT NULL,
-    alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    name character varying COLLATE pg_catalog."default",
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone,
-    is_active boolean DEFAULT false,
-    CONSTRAINT menu_pkey PRIMARY KEY (id)
+  id uuid NOT NULL,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+  name character varying COLLATE pg_catalog."default",
+  created_at timestamp without time zone NOT NULL,
+  updated_at timestamp without time zone,
+  is_active boolean DEFAULT false,
+  CONSTRAINT menu_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS ${schemaName}.products
 (
-    id uuid NOT NULL,
-    name character varying COLLATE pg_catalog."default" NOT NULL,
-    discount_value integer,
-    price numeric NOT NULL,
-    on_sale boolean NOT NULL,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone,
-    alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    discount_type character varying COLLATE pg_catalog."default",
-    url_img character varying COLLATE pg_catalog."default",
-    description character varying COLLATE pg_catalog."default",
-    is_gluten_free boolean,
-    is_vegan boolean,
-    is_vegetarian boolean,
-    CONSTRAINT products_pkey PRIMARY KEY (id)
+  id uuid NOT NULL,
+  name character varying COLLATE pg_catalog."default" NOT NULL,
+  discount_value integer,
+  price numeric NOT NULL,
+  on_sale boolean NOT NULL,
+  created_at timestamp without time zone NOT NULL,
+  updated_at timestamp without time zone,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+  discount_type character varying COLLATE pg_catalog."default",
+  url_img character varying COLLATE pg_catalog."default",
+  description character varying COLLATE pg_catalog."default",
+  is_gluten_free boolean,
+  is_vegan boolean,
+  is_vegetarian boolean,
+  CONSTRAINT products_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS public.tenants
 (
-    id uuid NOT NULL,
-    name character varying COLLATE pg_catalog."default" NOT NULL,
-    tenant_name character varying COLLATE pg_catalog."default" NOT NULL,
-    created_at timestamp without time zone NOT NULL,
-    deleted_at timestamp without time zone,
-    updated_at timestamp without time zone,
-    alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    tenant_img character varying COLLATE pg_catalog."default",
-    CONSTRAINT tenants_pkey PRIMARY KEY (id)
+  id uuid NOT NULL,
+  name character varying COLLATE pg_catalog."default" NOT NULL,
+  tenant_name character varying COLLATE pg_catalog."default" NOT NULL,
+  created_at timestamp without time zone NOT NULL,
+  deleted_at timestamp without time zone,
+  updated_at timestamp without time zone,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+  tenant_img character varying COLLATE pg_catalog."default",
+  CONSTRAINT tenants_pkey PRIMARY KEY (id)
 );
 
 CREATE TABLE IF NOT EXISTS public.users
 (
-    id uuid NOT NULL,
-    username character varying COLLATE pg_catalog."default" NOT NULL,
-    password character varying COLLATE pg_catalog."default" NOT NULL,
-    is_admin boolean NOT NULL,
-    created_at timestamp without time zone NOT NULL,
-    updated_at timestamp without time zone,
-    alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
-    tenant_id uuid NOT NULL,
-    name character varying COLLATE pg_catalog."default" NOT NULL,
-    email character varying COLLATE pg_catalog."default",
-    CONSTRAINT users_pkey PRIMARY KEY (id)
+  id uuid NOT NULL,
+  username character varying COLLATE pg_catalog."default" NOT NULL,
+  password character varying COLLATE pg_catalog."default" NOT NULL,
+  is_admin boolean NOT NULL,
+  created_at timestamp without time zone NOT NULL,
+  updated_at timestamp without time zone,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
+  tenant_id uuid NOT NULL,
+  name character varying COLLATE pg_catalog."default" NOT NULL,
+  email character varying COLLATE pg_catalog."default",
+  is_subscribed boolean,
+  subscription_date timestamp without time zone,
+  sid character varying COLLATE pg_catalog."default",
+  CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
-ALTER TABLE IF EXISTS ${schemaName}.category_products
-    ADD CONSTRAINT fk_catprod FOREIGN KEY (product_id)
-    REFERENCES ${schemaName}.products (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS ${schemaName}.category_products
-    ADD CONSTRAINT fk_prodcat FOREIGN KEY (category_id)
-    REFERENCES ${schemaName}.categories (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS ${schemaName}.menu_categories
-    ADD CONSTRAINT category_id FOREIGN KEY (category_id)
-    REFERENCES ${schemaName}.categories (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
-
-
-ALTER TABLE IF EXISTS ${schemaName}.menu_categories
-    ADD CONSTRAINT "menuId" FOREIGN KEY (menu_id)
-    REFERENCES ${schemaName}.menus (id) MATCH SIMPLE
-    ON UPDATE NO ACTION
-    ON DELETE NO ACTION
-    NOT VALID;
 
 END;
       `,
