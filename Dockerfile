@@ -1,6 +1,7 @@
 # Base image
 FROM node:18
-
+ENV GENERATE_SOURCEMAP=false
+ENV NODE_OPTIONS=--max-old-space-size=16384
 # Create app directory
 WORKDIR /usr/src/app
 
