@@ -98,7 +98,7 @@ export class TenantsService {
 
     if (tenant.rows.length > 0) {
       throw new HttpException(
-        'Nome já cadastrado, por favor, escolha um outro nome.',
+        'Nome de empresa já cadastrada, por favor, escolha um outro nome.',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

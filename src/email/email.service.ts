@@ -30,7 +30,7 @@ export class EmailService {
       subject: 'Email de recuperação de senha',
       templateId: 'd-78fee0e5c74a4c87b8650bd2a85f1618', //Retrieve from config service or environment variable
       dynamicTemplateData: {
-        link: `${process.env.HOST}change-password/${body}`,
+        link: `${process.env.FE_HOST}change-password/${body}`,
         subject: 'Email de recuperação de senha',
       }, //The data to be used in the template
     };
