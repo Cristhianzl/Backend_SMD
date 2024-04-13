@@ -9,7 +9,6 @@ export class DiscountsService {
     @InjectConnection('dbConnection')
     private dbConnection: Client,
   ) {}
-
   setTenant(tenant: string) {
     this.tenant = tenant;
   }
