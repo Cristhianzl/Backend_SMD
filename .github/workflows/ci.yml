@@ -21,4 +21,4 @@ jobs:
       - name: Build the Docker image
         run: docker build -t cicd-pipeline .
       - name: Push to Docker
-        run: docker push varsubham/cicd-pipeline:latest
+        run: docker push Cristhianzl/Backend_SMD:latest
