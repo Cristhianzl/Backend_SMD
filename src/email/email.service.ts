@@ -55,7 +55,7 @@ export class EmailService {
       subject: 'Seja bem vindo!',
       templateId: 'd-7fb3e159dc304f81985390bdd5510134', //Retrieve from config service or environment variable
       dynamicTemplateData: {
-        link: `${process.env.HOST}confirmation/${body}`,
+        link: `${process.env.FE_HOST}confirmation/${body}`,
         subject: 'Seja bem vindo!',
       }, //The data to be used in the template
     };
