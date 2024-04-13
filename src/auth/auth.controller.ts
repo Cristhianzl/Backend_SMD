@@ -43,7 +43,6 @@ export class AuthController {
   renewAccessToken(@Body() token: any) {
     return this.authService.renewAccessToken(token);
   }
-
   @UseGuards(AuthGuard)
   @Get('profile')
   getProfile(@Request() req) {
