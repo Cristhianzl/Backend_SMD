@@ -59,7 +59,6 @@ export class AuthController {
   getUser(@Body() body: any) {
     return this.authService.getUser(body);
   }
-
   @ApiHeader({
     name: '',
     example: 'tenant-test',
