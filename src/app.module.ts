@@ -13,7 +13,6 @@ import { PostgresModule } from 'nest-postgres';
 import { EmailModule } from './email/email.module';
 import { ConfigModule } from '@nestjs/config';
 import { FileUploaderModule } from './file-uploader/file-uploader.module';
-
 console.log(process.env.DB_USER, process.env.DB_PASS);
 
 @Module({
