@@ -137,7 +137,6 @@ export class AuthService {
     ) {
       return false;
     }
-
     if (
       moment().diff(currentUser?.created_at, 'days') > 11 &&
       currentUser?.subscription_date === null
