@@ -1,7 +1,6 @@
 # Base image
 FROM node:18-alpine
-ENV GENERATE_SOURCEMAP=false
-ENV NODE_OPTIONS=--max-old-space-size=16384
+ENV NODE_OPTIONS=--max-old-space-size=8192
 # Create app directory
 WORKDIR /usr/src/app
 
