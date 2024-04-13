@@ -70,3 +70,4 @@ export class AuthController {
     return "I'm alive!";
   }
 }
+// Path: src/auth/auth.service.ts
