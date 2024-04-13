@@ -13,7 +13,6 @@ export class DiscountsService {
   setTenant(tenant: string) {
     this.tenant = tenant;
   }
-
   async listAll() {
     return await this.dbConnection.query(
       `select * from ${this.tenant}.discounts`,
