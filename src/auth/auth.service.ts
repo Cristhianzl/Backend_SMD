@@ -130,7 +130,6 @@ export class AuthService {
       await this.usersService.unsubscribeOnDb(username);
       return false;
     }
-
     if (
       moment().diff(currentUser?.created_at, 'days') > 11 &&
       moment() > moment(currentUser?.subscription_date).add(2, 'days')
