@@ -104,7 +104,7 @@ export class UsersService {
 
     if (tenant.rows.length > 0) {
       throw new HttpException(
-        'Nome de empresa já cadastrada, por favor, escolha um outro nome',
+        'Nome da empresa já cadastrada, por favor, escolha um outro nome',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -191,9 +191,9 @@ export class UsersService {
       `select * from public.tenants where name = '${input.tenantName}'`,
     );
 
-    if (tenant.rows.length > 0 && !tenant.rows[0].name !== input.tenantName) {
+    if (tenant.rows.length > 0 && tenant.rows[0].name !== input.tenantName) {
       throw new HttpException(
-        'Nome de empresa já cadastrada, por favor, escolha um outro nome',
+        'Nome da empresa já cadastrada, por favor, escolha um outro nome',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
