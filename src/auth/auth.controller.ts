@@ -59,4 +59,15 @@ export class AuthController {
   getUser(@Body() body: any) {
     return this.authService.getUser(body);
   }
+
+  @ApiHeader({
+    name: '',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Get('health')
+  healthCheck() {
+    return "I'm alive!";
+  }
 }
