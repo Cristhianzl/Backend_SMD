@@ -115,7 +115,6 @@ export class AuthService {
       }),
     };
   }
-
   async invalidateHackerToken(username) {
     const user = await this.usersService.findOne(username);
     const currentUser = user?.rows[0];
