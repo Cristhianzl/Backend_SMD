@@ -19,6 +19,6 @@ jobs:
         run: docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD
 
       - name: Build the Docker image
-        run: docker build -t Backend_SMD .
+        run: docker build -t cristhianzl/cicd-pipeline .
       - name: Push to Docker
-        run: docker push cristhianzl/cicd-pipeline:tagname
+        run: docker push cristhianzl/cicd-pipeline:latest
