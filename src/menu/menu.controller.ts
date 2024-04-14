@@ -12,6 +12,7 @@ import {
   UseGuards,
   Inject,
   HttpException,
+  Patch,
 } from '@nestjs/common';
 import {
   ApiDefaultResponse,
@@ -243,6 +244,28 @@ export class MenusController {
     const access = await this.jwtService.decode(token.split(' ')[1]);
     this.setTenant(access.tenantName);
     const data = await this.menusService.remove(id);
-    return GetMenuDto.factory(GetMenuDto, data[0]);
+    return GetMenuDto.factory(GetMenuDto, data.rows[0]);
+  }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetMenuDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @UseGuards(AuthGuard)
+  @Patch('/:id')
+  async activateMenu(
+    @Headers('authorization') token: any,
+    @Param('id', new ParseUUIDPipe()) id: string,
+  ) {
+    const access = await this.jwtService.decode(token.split(' ')[1]);
+    this.setTenant(access.tenantName);
+    const data = await this.menusService.activeMenu(id);
+    return GetMenuDto.factory(GetMenuDto, data);
   }
 }

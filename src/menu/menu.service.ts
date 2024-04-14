@@ -104,16 +104,6 @@ export class MenusService {
   async edit(input) {
     let values: string = '';
 
-    if (input.is_active != null) {
-      values = values + `is_active = '${input.is_active}',`;
-    }
-
-    if (input.is_active === true) {
-      await this.dbConnection.query(
-        `update ${this.tenant}.menus set is_active = false where is_active = true`,
-      );
-    }
-
     const data = await this.dbConnection.query(
       `update ${this.tenant}.menus set name = '${input.name}', ${values} updated_at = (NOW() - interval '3 hour') where id = '${input.id}' returning *`,
     );
@@ -123,18 +113,18 @@ export class MenusService {
         `delete from ${this.tenant}.menu_categories where menu_id = '${input.id}'`,
       );
 
-      input.categories?.forEach(async (element) => {
+      for (let i = 0; i < input.categories.length; i++) {
         await this.dbConnection.query(
           `insert into ${
             this.tenant
-          }.menu_categories (id, menu_id, category_id) values ('${uuid()}', '${
+          }.menu_categories (id, menu_id, category_id, order_view) values ('${uuid()}', '${
             input.id
-          }', '${element}')`,
+          }', '${input.categories[i]}', ${i})`,
         );
-      });
+      }
     }
 
-    return data[0];
+    return data.rows[0];
   }
 
   async remove(id: string) {
@@ -215,5 +205,17 @@ export class MenusService {
     } else {
       throw new HttpException('Nenhum menu ativo.', HttpStatus.NOT_FOUND);
     }
+  }
+
+  async activeMenu(id: string) {
+    await this.dbConnection.query(
+      `update ${this.tenant}.menus set is_active = false where is_active = true`,
+    );
+
+    const data = await this.dbConnection.query(
+      `update ${this.tenant}.menus set is_active = true where id = '${id}' returning *`,
+    );
+
+    return data;
   }
 }
