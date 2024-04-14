@@ -61,4 +61,12 @@ export class FileUploaderService {
       return s3Response;
     } catch (e) {}
   }
+
+  async deleteFile(url: string) {
+    const key = url.split('/').pop();
+
+    var params = { Bucket: process.env.AWS_BUCKET, Key: key };
+    let s3Response = await this.s3.deleteObject(params).promise();
+    return s3Response;
+  }
 }

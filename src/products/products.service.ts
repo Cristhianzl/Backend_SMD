@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { v4 as uuid } from 'uuid';
 import { Client } from 'pg';
 import { InjectConnection } from 'nest-postgres';
+import { FileUploaderService } from 'src/file-uploader/file-uploader.service';
 @Injectable()
 export class ProductsService {
   tenant: string;
@@ -9,6 +10,7 @@ export class ProductsService {
   constructor(
     @InjectConnection('dbConnection')
     private dbConnection: Client,
+    private readonly fileUploader: FileUploaderService,
   ) {}
 
   setTenant(tenant: string) {
@@ -211,6 +213,10 @@ export class ProductsService {
       );
     }
 
+    const item = await this.dbConnection.query(
+      `select * from ${this.tenant}.products where id = '${id}'`,
+    );
+
     await this.dbConnection.query(
       `delete from ${this.tenant}.category_products where product_id = '${id}'`,
     );
@@ -218,6 +224,14 @@ export class ProductsService {
     const data = await this.dbConnection.query(
       `delete from ${this.tenant}.products where id = '${id}' returning *`,
     );
+
+    if (
+      item?.rows[0]?.url_img &&
+      item?.rows[0]?.url_img !== '' &&
+      item?.rows[0]?.url_img !== null
+    ) {
+      await this.fileUploader.deleteFile(item?.rows[0]?.url_img);
+    }
 
     return data;
   }

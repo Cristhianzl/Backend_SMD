@@ -3,6 +3,7 @@ import { ProductsService } from './products.service';
 import { ProductsController } from './products.controller';
 import { AuthModule } from 'src/auth/auth.module';
 import { CacheModule } from '@nestjs/cache-manager';
+import { FileUploaderModule } from 'src/file-uploader/file-uploader.module';
 
 @Module({
   imports: [
@@ -11,6 +12,7 @@ import { CacheModule } from '@nestjs/cache-manager';
       max: 100,
     }),
     AuthModule,
+    FileUploaderModule,
   ],
   providers: [ProductsService],
   controllers: [ProductsController],

@@ -41,5 +41,3 @@ export class FileUploaderController {
     return { url: uploadedData.Location };
   }
 }
-//verificar o upload de imagem do tenant
-//verificar o upload da imagem do produto fora do grid e o edit
