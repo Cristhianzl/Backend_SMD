@@ -115,7 +115,6 @@ export class CategoriesController {
       const checkUser = await this.authService.invalidateHackerToken(
         access.username,
       );
-
       if (checkUser === true) {
         await this.cacheManager.set(
           'categories-ok-' + access.username,
