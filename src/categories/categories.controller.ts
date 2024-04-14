@@ -125,7 +125,6 @@ export class CategoriesController {
         throw new HttpException('User não autorizado', HttpStatus.FORBIDDEN);
       }
     }
-
     const data = await this.categoriesService.findWithFilter(
       filters,
       pageindex,
