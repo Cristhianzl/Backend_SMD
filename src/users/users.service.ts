@@ -494,7 +494,7 @@ export class UsersService {
 
     const subscription = await this.stripe.subscriptions.create({
       customer: customers.data[0].id,
-      items: [{ price: 'price_1Or7hnBJOR4vvWGRb13MsdaX', quantity: 1 }],
+      items: [{ price: 'price_1Onu0xBJOR4vvWGRocv6lYwy', quantity: 1 }],
       expand: ['latest_invoice.payment_intent'],
     });
 
