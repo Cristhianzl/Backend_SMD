@@ -185,7 +185,6 @@ export class UsersService {
 
     return returnData;
   }
-
   async edit(input, token) {
     const tenant = await this.dbConnection.query(
       `select * from public.tenants where name = '${input.tenantName}'`,
