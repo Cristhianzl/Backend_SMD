@@ -80,7 +80,6 @@ export class AuthService {
     if (!currentUser) {
       throw new UnauthorizedException();
     }
-
     const userData = {
       id: currentUser.id,
       name: currentUser.name,
