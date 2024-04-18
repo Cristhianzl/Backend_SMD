@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Post,
   Request,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
@@ -57,6 +58,7 @@ export class AuthController {
   })
   @Post('getUser')
   getUser(@Body() body: any) {
+    if (!body || !body?.id) throw new UnauthorizedException();
     return this.authService.getUser(body);
   }
   @ApiHeader({
