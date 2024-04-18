@@ -148,7 +148,7 @@ export class MenusService {
 
   async getActive() {
     const tenantName = await this.dbConnection.query(
-      `select name from public.tenants where tenant_name = '${this.tenant}'`,
+      `select name, tenant_img from public.tenants where tenant_name = '${this.tenant}'`,
     );
 
     if (tenantName.rows.length === 0) {
@@ -200,7 +200,11 @@ export class MenusService {
       }
 
       let menuFinal = buildFinalMenu(data.rows);
-      menuFinal = { ...menuFinal, tenant: tenantName.rows[0].name };
+      menuFinal = {
+        ...menuFinal,
+        tenant: tenantName.rows[0].name,
+        img: tenantName.rows[0].tenant_img,
+      };
       return menuFinal;
     } else {
       throw new HttpException('Nenhum menu ativo.', HttpStatus.NOT_FOUND);
