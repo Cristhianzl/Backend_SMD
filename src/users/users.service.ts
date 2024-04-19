@@ -65,7 +65,9 @@ export class UsersService {
     }
 
     const query = `select * from ${this.tenant}.users where 1=1 ${filtersQuery} 
-    group by created_at, id order by created_at desc limit ${pagesize} offset ${page}`;
+    group by created_at, id order by created_at desc limit ${pagesize} offset ${
+      page * pagesize
+    }`;
 
     queryCount = `select count(*) from ${this.tenant}.users where 1=1 ${
       Object.keys(filters).length ? filtersQuery : ''

@@ -48,7 +48,9 @@ export class MenusService {
     }
 
     const query = `select * from ${this.tenant}.menus where 1=1 ${filtersQuery} 
-    group by created_at, id, name order by is_active desc, created_at desc limit ${pagesize} offset ${page}`;
+    group by created_at, id, name order by is_active desc, created_at desc limit ${pagesize} offset ${
+      page * pagesize
+    }`;
 
     const numberActives = await this.dbConnection.query(
       `select count(*) from ${this.tenant}.menus where is_active = true`,

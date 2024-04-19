@@ -47,8 +47,12 @@ export class ProductsService {
       filtersQuery = filtersQuery + ` and name like '%${filters.name}%' `;
     }
 
-    const query = `select * from ${this.tenant}.products where 1=1 ${filtersQuery} 
-    group by created_at, id, name order by created_at desc limit ${pagesize} offset ${page}`;
+    const query = `select * from ${
+      this.tenant
+    }.products where 1=1 ${filtersQuery} 
+    group by created_at, id, name order by created_at desc limit ${pagesize} offset ${
+      page * pagesize
+    }`;
 
     queryCount = `select count(*) from ${this.tenant}.products where 1=1 ${
       Object.keys(filters).length ? filtersQuery : ''
