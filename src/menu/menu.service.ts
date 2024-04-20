@@ -171,6 +171,7 @@ export class MenusService {
         cp.order_view AS product_order_view,
         c.NAME as category_name,
         c.url_img as category_img,
+        p.id,
         p.NAME as product_name,
         p.discount_value,
         p.price,

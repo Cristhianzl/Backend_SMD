@@ -11,6 +11,7 @@ export const buildFinalMenu = (data: any) => {
       if (existingCategory) {
         // Category already exists, add the product to it
         existingCategory.products.push({
+          id: item.product_id,
           product_order_view: item.product_order_view,
           product_name: item.product_name,
           product_img: item.product_img,
@@ -32,6 +33,7 @@ export const buildFinalMenu = (data: any) => {
           current: index === 0 ? true : false,
           products: [
             {
+              id: item.product_id,
               product_order_view: item.product_order_view,
               product_name: item.product_name,
               product_img: item.product_img,
