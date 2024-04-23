@@ -17,7 +17,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     console.error(`
     IP: ${requestIp.getClientIp(request)}
-    IP2: ${request.headers['x-forwarded-for']}
+    IP-XFF: ${request.headers['x-forwarded-for']}
     Endpoint: ${request.url}
     Method: ${request.method}
     Error: ${exception.message}
