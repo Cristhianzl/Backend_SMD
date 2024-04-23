@@ -14,10 +14,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
+
     console.error(`
     IP: ${requestIp.getClientIp(request)}
     IP2: ${request.ip}
     IP3: ${request.socket.remoteAddress}
+    IP4: ${request.headers['x-forwarded-for']}
     Endpoint: ${request.url}
     Method: ${request.method}
     Error: ${exception.message}
