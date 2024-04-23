@@ -17,9 +17,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     console.error(`
     IP: ${requestIp.getClientIp(request)}
-    IP2: ${request.ip}
-    IP3: ${request.socket.remoteAddress}
-    IP4: ${request.headers['x-forwarded-for']}
+    IP2: ${request.headers['x-forwarded-for']}
     Endpoint: ${request.url}
     Method: ${request.method}
     Error: ${exception.message}
