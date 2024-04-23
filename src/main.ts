@@ -2,11 +2,13 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './shared/http-exception.filter';
+import * as requestIp from 'request-ip';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.useGlobalFilters(new HttpExceptionFilter());
+  app.use(requestIp.mw());
 
   const config = new DocumentBuilder()
     .setTitle('Super Menu Rest')

@@ -5,6 +5,7 @@ import {
   HttpException,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import * as requestIp from 'request-ip';
 
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -15,6 +16,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
 
     console.error(`
+    IP: ${requestIp.getClientIp(request)}
     Endpoint: ${request.url}
     Method: ${request.method}
     Error: ${exception.message}
