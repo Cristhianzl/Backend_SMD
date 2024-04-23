@@ -14,9 +14,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
-
     console.error(`
     IP: ${requestIp.getClientIp(request)}
+    IP2: ${request.ip}
+    IP3: ${request.socket.remoteAddress}
     Endpoint: ${request.url}
     Method: ${request.method}
     Error: ${exception.message}
