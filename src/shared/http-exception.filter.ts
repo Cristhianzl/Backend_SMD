@@ -16,6 +16,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const status = exception.getStatus();
 
     console.error(`
+    Data: ${new Date().toISOString()}
     IP: ${requestIp.getClientIp(request)}
     IP-XFF: ${request.headers['x-forwarded-for']}
     Endpoint: ${request.url}
