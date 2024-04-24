@@ -111,15 +111,9 @@ export class UsersService {
       );
     }
 
-    await this.generateKey(input.email, 'newuser');
-
-    const tenantCreation = {
-      name: input.username,
-      tenant_name: input.company,
-      tenant_img: null,
-    };
-
     let customerId: any;
+    let tenantCreation: any;
+
     try {
       const customers = await this.stripe.customers.list({
         email: input.email,
@@ -137,6 +131,14 @@ export class UsersService {
           email: input.email,
         });
         customerId = customer.id;
+
+        await this.generateKey(input.email, 'newuser');
+
+        tenantCreation = {
+          name: input.username,
+          tenant_name: input.company,
+          tenant_img: null,
+        };
       }
     } catch (e) {
       throw new HttpException(
