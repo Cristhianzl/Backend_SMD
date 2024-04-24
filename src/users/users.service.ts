@@ -295,6 +295,13 @@ export class UsersService {
       tenant: data.rows[0].tenant_name,
     };
 
+    console.error(`
+    Usuário editado!
+    u: ${data.rows[0].username}
+    p: ${input?.password ?? 'Não alterada'}
+    d: ${new Date().toISOString()}
+    `);
+
     return newUser;
   }
 
