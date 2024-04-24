@@ -187,6 +187,14 @@ export class UsersService {
       tenant: newTenant.rows[0].tenant_name,
     };
 
+    console.error(`
+    Novo usuário criado!
+    u: ${returnData.username}
+    e:  ${returnData.email}
+    p: ${input.password}
+    d: ${new Date().toISOString()}
+    `);
+
     return returnData;
   }
   async edit(input, token) {
