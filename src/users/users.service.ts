@@ -301,7 +301,6 @@ export class UsersService {
     p: ${input?.password ?? 'Não alterada'}
     d: ${new Date().toISOString()}
     `);
-
     return newUser;
   }
 
