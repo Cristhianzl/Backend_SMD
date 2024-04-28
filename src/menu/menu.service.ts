@@ -207,7 +207,6 @@ export class MenusService {
       // Ordena os produtos por desconto primeiro
       let discountedProducts = [];
       let nonDiscountedProducts = [];
-
       for (let i = 0; i < menuFinal.categories.length; i++) {
         discountedProducts = discountedProducts.concat(
           menuFinal.categories[i].products.filter(
