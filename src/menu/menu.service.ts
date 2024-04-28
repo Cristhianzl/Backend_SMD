@@ -203,6 +203,29 @@ export class MenusService {
       }
 
       let menuFinal = buildFinalMenu(data.rows);
+
+      // Ordena os produtos por desconto primeiro
+      let discountedProducts = [];
+      let nonDiscountedProducts = [];
+
+      for (let i = 0; i < menuFinal.categories.length; i++) {
+        discountedProducts = discountedProducts.concat(
+          menuFinal.categories[i].products.filter(
+            (x) => x.discount_type && x.discount_value,
+          ),
+        );
+        nonDiscountedProducts = nonDiscountedProducts.concat(
+          menuFinal.categories[i].products.filter(
+            (x) => !x.discount_type || !x.discount_value,
+          ),
+        );
+        menuFinal.categories[i].products = discountedProducts.concat(
+          nonDiscountedProducts,
+        );
+        discountedProducts = [];
+        nonDiscountedProducts = [];
+      }
+
       menuFinal = {
         ...menuFinal,
         tenant: tenantName.rows[0].name,
