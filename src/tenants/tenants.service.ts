@@ -107,6 +107,12 @@ export class TenantsService {
       );
     }
 
+    const tenantIdQuery = await this.dbConnection.query(
+      `select id from public.tenants where tenant_name = '${input.tenant_name}'`,
+    );
+
+    const tenantId = input.id ?? tenantIdQuery.rows[0].id;
+
     let values: string = '';
 
     if (input.name != null) {
@@ -117,10 +123,30 @@ export class TenantsService {
       values = values + `tenant_img = '${input.tenant_img}',`;
     }
 
+    if (input.primary_color != null) {
+      values = values + `primary_color = '${input.primary_color}',`;
+    }
+
+    if (input.secondary_color != null) {
+      values = values + `secondary_color = '${input.secondary_color}',`;
+    }
+
+    if (input.tertiary_color != null) {
+      values = values + `tertiary_color = '${input.tertiary_color}',`;
+    }
+
+    if (input.quaternary_color != null) {
+      values = values + `quaternary_color = '${input.quaternary_color}',`;
+    }
+
+    if (input.quinary_color != null) {
+      values = values + `quinary_color = '${input.quinary_color}',`;
+    }
+
     const data = await this.dbConnection.query(
       `update ${this.tenant}.tenants set ${values}
       updated_at = NOW() - interval '3 hour'
-      where id = '${input.id}' returning *`,
+      where id = '${tenantId}' returning *`,
     );
 
     return data[0];
