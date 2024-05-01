@@ -112,7 +112,6 @@ export class TenantsService {
     );
 
     const tenantId = input.id ?? tenantIdQuery.rows[0].id;
-
     let values: string = '';
 
     if (input.name != null) {
