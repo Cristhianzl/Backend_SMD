@@ -213,6 +213,11 @@ CREATE TABLE IF NOT EXISTS public.tenants
   updated_at timestamp without time zone,
   alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
   tenant_img character varying COLLATE pg_catalog."default",
+  primary_color character varying COLLATE pg_catalog."default",
+  secondary_color character varying COLLATE pg_catalog."default",
+  tertiary_color character varying COLLATE pg_catalog."default",
+  quaternary_color character varying COLLATE pg_catalog."default",
+  quinary_color character varying COLLATE pg_catalog."default",
   CONSTRAINT tenants_pkey PRIMARY KEY (id)
 );
 

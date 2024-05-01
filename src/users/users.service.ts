@@ -490,7 +490,8 @@ export class UsersService {
     });
 
     const findActiveSubscription = subscriptionCheck.data.find(
-      (subscription) => subscription.status === 'active',
+      (subscription) =>
+        subscription.status === 'active' || subscription.status === 'trialing',
     );
 
     if (findActiveSubscription) {
@@ -567,7 +568,8 @@ export class UsersService {
     });
 
     const findActiveSubscription = subscription.data.find(
-      (subscription) => subscription.status === 'active',
+      (subscription) =>
+        subscription.status === 'active' || subscription.status === 'trialing',
     );
 
     const data = {
@@ -598,7 +600,8 @@ export class UsersService {
     });
 
     const findActiveSubscription = subscription.data.find(
-      (subscription) => subscription.status === 'active',
+      (subscription) =>
+        subscription.status === 'active' || subscription.status === 'trialing',
     );
 
     const canAccessTrial = moment().diff(user.created_at, 'days') < 11;
