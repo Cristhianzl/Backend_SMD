@@ -85,11 +85,11 @@ export class TenantsService {
     const data = await this.dbConnection.query(
       `insert into ${
         this.tenant
-      }.tenants (id, name, tenant_name, tenant_img, created_at) values ('${uuid()}', '${
+      }.tenants (id, name, tenant_name, tenant_img, created_at, primary_color, secondary_color, tertiary_color, quaternary_color, quinary_color) values ('${uuid()}', '${
         input.tenant_name
       }', '${createTenantName(input.tenant_name)}', '${
         input.tenant_img
-      }', NOW() - interval '3 hour') returning *`,
+      }', NOW() - interval '3 hour', '#111827', '#ffffff', '#29304c', '#f59e0b', '#b4530c') returning *`,
     );
 
     return data;
@@ -213,11 +213,11 @@ CREATE TABLE IF NOT EXISTS public.tenants
   updated_at timestamp without time zone,
   alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1 ),
   tenant_img character varying COLLATE pg_catalog."default",
-  primary_color character varying COLLATE pg_catalog."default",
-  secondary_color character varying COLLATE pg_catalog."default",
-  tertiary_color character varying COLLATE pg_catalog."default",
-  quaternary_color character varying COLLATE pg_catalog."default",
-  quinary_color character varying COLLATE pg_catalog."default",
+  primary_color character varying COLLATE pg_catalog."default" DEFAULT '#111827',
+  secondary_color character varying COLLATE pg_catalog."default" DEFAULT '#ffffff',
+  tertiary_color character varying COLLATE pg_catalog."default" DEFAULT '#29304c',
+  quaternary_color character varying COLLATE pg_catalog."default" DEFAULT '#f59e0b',
+  quinary_color character varying COLLATE pg_catalog."default" DEFAULT '#b4530c',
   CONSTRAINT tenants_pkey PRIMARY KEY (id)
 );
 

@@ -150,7 +150,7 @@ export class MenusService {
 
   async getActive() {
     const tenantName = await this.dbConnection.query(
-      `select name, tenant_img from public.tenants where tenant_name = '${this.tenant}'`,
+      `select * from public.tenants where tenant_name = '${this.tenant}'`,
     );
 
     if (tenantName.rows.length === 0) {
@@ -229,6 +229,11 @@ export class MenusService {
         ...menuFinal,
         tenant: tenantName.rows[0].name,
         img: tenantName.rows[0].tenant_img,
+        primary_color: tenantName.rows[0].primary_color,
+        secondary_color: tenantName.rows[0].secondary_color,
+        tertiary_color: tenantName.rows[0].tertiary_color,
+        quaternary_color: tenantName.rows[0].quaternary_color,
+        quinary_color: tenantName.rows[0].quinary_color,
       };
       return menuFinal;
     } else {

@@ -62,6 +62,11 @@ export const buildFinalMenu = (data: any) => {
     categories: groupedMenu.categories,
     tenant: '',
     img: '',
+    primary_color: '',
+    secondary_color: '',
+    tertiary_color: '',
+    quaternary_color: '',
+    quinary_color: '',
   };
 
   return menu;
