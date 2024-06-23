@@ -264,11 +264,35 @@ CREATE TABLE IF NOT EXISTS public.users
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
 
+CREATE TABLE IF NOT EXISTS ${schemaName}.feedbacks
+(
+  id uuid NOT NULL PRIMARY KEY,
+  name character varying NULL,
+  menu_name character varying NULL,
+  email character varying NULL,
+  phone character varying NULL,
+  recommend boolean NULL,
+  liked_menu integer NULL,
+  liked_service integer NULL,
+  feedback_msg character varying NULL,
+  created_at timestamp without time zone NOT NULL,
+  alternative_id integer NOT NULL GENERATED ALWAYS AS IDENTITY (INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 2147483647 CACHE 1)
+);
+
 
 END;
       `,
     );
 
     return data;
+  }
+
+  async runMigrationsDB() {
+    const getAllSchemas = await this.dbConnection.query(
+      `select schema_name from information_schema.schemata where schema_name not in ('information_schema', 'pg_catalog', 'public')`,
+    );
+    for (const schema of getAllSchemas.rows) {
+      await this.runMigrations(schema.schema_name);
+    }
   }
 }

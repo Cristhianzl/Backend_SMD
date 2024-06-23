@@ -22,6 +22,7 @@ export class BaseDto {
     pageSize?,
     totalItems?,
     hasActive?,
+    moreOptions?,
   ) {
     if ((data as any)?.rows) {
       data = (data as any)?.rows;
@@ -37,6 +38,7 @@ export class BaseDto {
       pageSize: pageSize,
       count: totalItems,
       hasActive: hasActive,
+      moreOptions: moreOptions,
     };
 
     return returnData;

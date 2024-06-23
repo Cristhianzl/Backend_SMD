@@ -181,4 +181,21 @@ export class TenantsController {
     const data = await this.tenantsService.remove(id);
     return GetTenantsDto.factory(GetTenantsDto, data[0]);
   }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetTenantsDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Post('run-migrations')
+  async run(@Headers('authorization') token: any) {
+    this.setTenant(token);
+    await this.tenantsService.runMigrationsDB();
+    return { message: 'Migrations run successfully' };
+  }
 }
