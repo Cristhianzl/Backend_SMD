@@ -206,6 +206,7 @@ CREATE TABLE IF NOT EXISTS ${schemaName}.menus
   created_at timestamp without time zone NOT NULL,
   updated_at timestamp without time zone,
   is_active boolean DEFAULT false,
+  automation varchar(20) NULL,
   CONSTRAINT menu_pkey PRIMARY KEY (id)
 );
 
@@ -283,6 +284,20 @@ CREATE TABLE IF NOT EXISTS ${schemaName}.feedbacks
 END;
       `,
     );
+
+    //     DO $$
+    // BEGIN
+    //     IF NOT EXISTS (
+    //         SELECT 1
+    //         FROM information_schema.columns
+    //         WHERE table_schema = '${schemaName}'
+    //         AND table_name = 'menus'
+    //         AND column_name = 'automation'
+    //     ) THEN
+    //         ALTER TABLE ${schemaName}.menus
+    //         ADD COLUMN automation varchar(20) NULL;
+    //     END IF;
+    // END $$;
 
     return data;
   }

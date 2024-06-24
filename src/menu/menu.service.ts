@@ -3,6 +3,7 @@ import { v4 as uuid } from 'uuid';
 import { buildFinalMenu } from './factory/build-return-data';
 import { Client } from 'pg';
 import { InjectConnection } from 'nest-postgres';
+import * as moment from 'moment';
 
 @Injectable()
 export class MenusService {
@@ -85,7 +86,15 @@ export class MenusService {
 
     try {
       const data = await this.dbConnection.query(
-        `insert into ${this.tenant}.menus (id, name, is_active, created_at) values ('${uuidValue}', '${input.name}', false, NOW() - interval '3 hour') returning *`,
+        `
+        INSERT INTO ${
+          this.tenant
+        }.menus (id, name, is_active, automation, created_at)
+        VALUES ('${uuidValue}', '${input.name}', false, ${
+          input.automation ? `'${input.automation}'` : 'null'
+        }, NOW() - interval '3 hour')
+        RETURNING *;
+        `,
       );
       if (input?.categories?.length > 0) {
         input.categories.forEach(async (element, index) => {
@@ -107,7 +116,11 @@ export class MenusService {
     let values: string = '';
 
     const data = await this.dbConnection.query(
-      `update ${this.tenant}.menus set name = '${input.name}', ${values} updated_at = (NOW() - interval '3 hour') where id = '${input.id}' returning *`,
+      `update ${this.tenant}.menus set name = '${input.name}', automation = ${
+        input.automation ? `'${input.automation}'` : 'null'
+      }, ${values} updated_at = (NOW() - interval '3 hour') where id = '${
+        input.id
+      }' returning *`,
     );
 
     if (input?.categories?.length > 0) {
@@ -149,6 +162,8 @@ export class MenusService {
   }
 
   async getActive() {
+    let activeMenuId = null;
+
     const tenantName = await this.dbConnection.query(
       `select * from public.tenants where tenant_name = '${this.tenant}'`,
     );
@@ -164,7 +179,24 @@ export class MenusService {
       `select * from ${this.tenant}.menus where is_active = true`,
     );
 
-    if (hasActive.rowCount > 0) {
+    const dayOfWeekNumber = moment().day();
+
+    const menusAutomation = await this.dbConnection.query(
+      `SELECT * FROM ${this.tenant}.menus 
+             WHERE automation IS NOT NULL 
+             AND automation LIKE '%${dayOfWeekNumber}%'
+             ORDER BY created_at DESC`,
+    );
+
+    if (menusAutomation?.rowCount > 0) {
+      activeMenuId = menusAutomation?.rows[0]?.id;
+    } else if (hasActive?.rowCount > 0) {
+      activeMenuId = hasActive?.rows[0]?.id;
+    } else {
+      throw new HttpException('Nenhum menu ativo.', HttpStatus.NOT_FOUND);
+    }
+
+    if (activeMenuId) {
       const data = await this.dbConnection.query(
         `SELECT m.NAME,
         mc.order_view AS category_order_view,
@@ -195,7 +227,7 @@ export class MenusService {
                 ON c.id = mc.category_id
         INNER JOIN ${this.tenant}.products p
                 ON p.id = cp.product_id
- WHERE  m.is_active = true order by mc.order_view , cp.order_view `,
+ WHERE m.id = '${activeMenuId}' order by mc.order_view , cp.order_view `,
       );
 
       if (data.rowCount === 0) {
@@ -247,7 +279,7 @@ export class MenusService {
     );
 
     const data = await this.dbConnection.query(
-      `update ${this.tenant}.menus set is_active = true where id = '${id}' returning *`,
+      `update ${this.tenant}.menus set is_active = true, automation = null where id = '${id}' returning *`,
     );
 
     return data;
