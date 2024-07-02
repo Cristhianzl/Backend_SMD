@@ -243,7 +243,7 @@ CREATE TABLE IF NOT EXISTS public.tenants
   secondary_color character varying COLLATE pg_catalog."default" DEFAULT '#ffffff',
   tertiary_color character varying COLLATE pg_catalog."default" DEFAULT '#29304c',
   quaternary_color character varying COLLATE pg_catalog."default" DEFAULT '#f59e0b',
-  quinary_color character varying COLLATE pg_catalog."default" DEFAULT '#b4530c',
+  quinary_color character varying COLLATE pg_catalog."default" DEFAULT '#31b60c',
   CONSTRAINT tenants_pkey PRIMARY KEY (id)
 );
 
