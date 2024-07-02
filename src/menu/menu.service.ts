@@ -49,7 +49,7 @@ export class MenusService {
     }
 
     const query = `select * from ${this.tenant}.menus where 1=1 ${filtersQuery} 
-    group by created_at, id, name order by is_active desc, created_at desc limit ${pagesize} offset ${
+    group by created_at, id, name, is_active order by is_active desc, created_at desc limit ${pagesize} offset ${
       page * pagesize
     }`;
 
@@ -82,7 +82,17 @@ export class MenusService {
   }
 
   async add(input) {
+    let activeMenu = false;
+
     const uuidValue = uuid();
+
+    const menusRegistered = await this.dbConnection.query(
+      `select count(1) from ${this.tenant}.menus`,
+    );
+
+    if (Number(menusRegistered?.rows[0]?.count) === 0) {
+      activeMenu = true;
+    }
 
     try {
       const data = await this.dbConnection.query(
@@ -90,7 +100,7 @@ export class MenusService {
         INSERT INTO ${
           this.tenant
         }.menus (id, name, is_active, automation, created_at)
-        VALUES ('${uuidValue}', '${input.name}', false, ${
+        VALUES ('${uuidValue}', '${input.name}', ${activeMenu}, ${
           input.automation ? `'${input.automation}'` : 'null'
         }, NOW() - interval '3 hour')
         RETURNING *;
