@@ -273,4 +273,20 @@ export class UsersController {
       message: data,
     };
   }
+
+  @ApiDefaultResponse({
+    status: HttpStatus.OK,
+    type: GetUsersDto,
+  })
+  @ApiHeader({
+    name: 'tenant',
+    example: 'tenant-test',
+    description: 'Tenant',
+    required: true,
+  })
+  @Post('resend-email')
+  async resend(@Body() input: any) {
+    const data = await this.userService.resendEmail(input);
+    return GetUsersDto.factory(GetUsersDto, data);
+  }
 }

@@ -394,13 +394,6 @@ export class UsersService {
 
     const differenceInMinutes = moment(currentDate).diff(hashDate, 'minutes');
 
-    if (differenceInMinutes >= 3) {
-      throw new HttpException(
-        'Chave inválida',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-
     const emailToUpdate = decrypt(encryptedText);
 
     const email = await this.dbConnection.query(
@@ -410,6 +403,17 @@ export class UsersService {
     if (email.rows.length === 0) {
       throw new HttpException(
         'Usuário não encontrado',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    if (email.rows[0].is_admin) {
+      return 'Email confirmado com sucesso';
+    }
+
+    if (differenceInMinutes >= 20) {
+      throw new HttpException(
+        'Chave inválida',
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -617,5 +621,11 @@ export class UsersService {
     await this.dbConnection.query(
       `update ${this.tenant}.users set is_subscribed = false where username = '${username}'`,
     );
+  }
+
+  async resendEmail(tokens: any) {
+    const email = decrypt(tokens?.token2);
+    await this.generateKey(email, 'newuser');
+    return 'Email reenviado com sucesso';
   }
 }
